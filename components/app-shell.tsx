@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav, SidebarLogo } from "@/components/sidebar-nav";
@@ -20,7 +19,7 @@ export async function AppShell({
         <SidebarLogo />
       </header>
 
-      <div className="md:grid md:grid-cols-[260px_1fr]">
+      <div>
         {/* Sidebar */}
         <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:z-50 md:w-[260px] md:border-r md:border-border md:bg-background">
           <div className="flex h-14 items-center border-b border-border px-4">
@@ -31,8 +30,10 @@ export async function AppShell({
             {projectId ? (
               <SidebarNav projectId={projectId} />
             ) : (
-              <div className="px-3 py-2 text-sm text-muted-foreground">
-                Wybierz projekt, aby zobaczyć nawigację.
+              <div className="px-3 py-8 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Wybierz projekt, aby zobaczyć nawigację.
+                </p>
               </div>
             )}
           </div>
