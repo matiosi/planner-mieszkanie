@@ -53,15 +53,7 @@ returns boolean language sql stable security definer set search_path = public as
   select exists(select 1 from public.projects where id = pid and owner_id = auth.uid());
 $$;
 
-drop function if exists public.has_project_access(uuid) cascade;
-create function public.has_project_access(pid uuid)
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists(
-    select 1 from public.projects where id = pid and owner_id = auth.uid()
-    union all
-    select 1 from public.project_members where project_id = pid and user_id = auth.uid()
-  );
-$$;
+-- has_project_access tworzona po tabeli project_members (patrz niżej)
 
 -- =============================================================================
 -- TABELE — CREATE IF NOT EXISTS + ALTER TABLE ADD COLUMN IF NOT EXISTS
@@ -630,6 +622,20 @@ create table if not exists public.pending_invitations (
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now()
 );
+
+-- =============================================================================
+-- has_project_access — po created project_members
+-- =============================================================================
+
+drop function if exists public.has_project_access(uuid) cascade;
+create function public.has_project_access(pid uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(
+    select 1 from public.projects where id = pid and owner_id = auth.uid()
+    union all
+    select 1 from public.project_members where project_id = pid and user_id = auth.uid()
+  );
+$$;
 
 -- =============================================================================
 -- INDEKSY
