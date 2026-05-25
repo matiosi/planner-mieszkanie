@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
+const inter = Inter({ subsets: ["latin"] });
+
 export const metadata: Metadata = {
-  title: "FlatFinish Planner",
-  description: "Polski planner wykończenia mieszkania"
+  title: "Planner Mieszkanie",
+  description: "Zarządzaj wykończeniem mieszkania od A do Z.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl">
-      <body>{children}</body>
+      <body className={inter.className}>
+        {children}
+        <Toaster position="bottom-right" richColors />
+      </body>
     </html>
   );
 }

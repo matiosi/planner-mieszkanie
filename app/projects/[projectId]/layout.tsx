@@ -2,7 +2,7 @@ import { AppShell } from "@/components/app-shell";
 
 export default async function ProjectLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
   params: Promise<{ projectId: string }>;

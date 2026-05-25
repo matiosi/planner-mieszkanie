@@ -1,49 +1,172 @@
-import { deleteRow, upsertProduct } from "@/app/actions";
-import { Badge, Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { DeleteButton } from "@/components/delete-button";
+import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { labelFor, labels } from "@/lib/labels";
 import { requireProject } from "@/lib/data";
+import { upsertProduct, deleteProduct } from "@/app/actions/products";
+import { Plus, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
-export default async function ProductsPage({ params }: { params: Promise<{ projectId: string }> }) {
+export default async function ProductsPage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
   const { projectId } = await params;
   const { supabase } = await requireProject(projectId);
-  const [products, rooms] = await Promise.all([
-    supabase.from("products").select("*, rooms(name)").eq("project_id", projectId).order("created_at"),
-    supabase.from("rooms").select("id,name").eq("project_id", projectId).order("name")
+
+  const [{ data: products }, { data: rooms }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id,name,category,price,url,store,status,delivery_status,expected_delivery_date,room_id,purchase_priority")
+      .eq("project_id", projectId)
+      .order("status")
+      .order("name"),
+    supabase.from("rooms").select("id,name").eq("project_id", projectId).order("sort_order"),
   ]);
+
+  const list = products ?? [];
+  const roomList = rooms ?? [];
+
+  async function addProduct(formData: FormData) {
+    "use server";
+    await upsertProduct(projectId, formData);
+  }
 
   return (
     <>
-      <PageHeader title="Produkty" description="Produkty, sklepy, ceny, status zakupów i dostawy." />
+      <PageHeader
+        title="Produkty"
+        description={`${list.length} produktów w projekcie`}
+        actions={
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/projects/${projectId}/shopping-list`}>Lista zakupów</Link>
+          </Button>
+        }
+      />
+
       <Card className="mt-6">
-        <form action={upsertProduct.bind(null, projectId)} className="grid gap-3 md:grid-cols-8">
-          <Field label="Nazwa"><input className={inputClass} name="name" required /></Field>
-          <Field label="Kategoria"><input className={inputClass} name="category" /></Field>
-          <Field label="Cena"><input className={inputClass} name="price" type="number" /></Field>
-          <Field label="Sklep"><input className={inputClass} name="store" /></Field>
-          <Field label="Pokój"><select className={inputClass} name="room_id"><option value="">Cały projekt</option>{rooms.data?.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}</select></Field>
-          <Field label="Status"><select className={inputClass} name="status">{Object.entries(labels.productStatus).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-          <Field label="Dostawa"><select className={inputClass} name="delivery_status">{Object.entries(labels.deliveryStatus).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-          <div className="flex items-end"><Button className="w-full">Dodaj</Button></div>
-          <Field label="URL"><input className={inputClass} name="url" /></Field>
-          <Field label="Zdjęcie URL"><input className={inputClass} name="image_url" /></Field>
-          <Field label="Termin dostawy"><input className={inputClass} name="expected_delivery_date" type="date" /></Field>
-          <Field label="Notatki"><input className={inputClass} name="notes" /></Field>
+        <h2 className="font-semibold mb-4">Dodaj produkt</h2>
+        <form action={addProduct} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Nazwa *" className="sm:col-span-2">
+            <Input name="name" required placeholder="np. Płytki Tubądzin Stone Flower 60×60" />
+          </Field>
+          <Field label="Kategoria">
+            <Input name="category" placeholder="np. Płytki" />
+          </Field>
+          <Field label="Sklep">
+            <Input name="store" placeholder="np. Castorama" />
+          </Field>
+          <Field label="Cena (PLN)">
+            <Input name="price" type="number" step="0.01" placeholder="0.00" />
+          </Field>
+          <Field label="Link">
+            <Input name="url" type="url" placeholder="https://…" />
+          </Field>
+          <Field label="Status">
+            <Select name="status" defaultValue="FOUND">
+              {Object.entries(labels.productStatus).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Priorytet">
+            <Select name="purchase_priority" defaultValue="MEDIUM">
+              {Object.entries(labels.priority).map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Pomieszczenie">
+            <Select name="room_id" defaultValue="">
+              <option value="">— brak —</option>
+              {roomList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Oczekiwana dostawa">
+            <Input name="expected_delivery_date" type="date" />
+          </Field>
+          <div className="sm:col-span-2 lg:col-span-4">
+            <Button type="submit" size="sm">
+              <Plus className="h-4 w-4" /> Dodaj produkt
+            </Button>
+          </div>
         </form>
       </Card>
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {products.data?.map((product) => (
-          <Card key={product.id}>
-            {product.image_url ? <img src={product.image_url} alt="" className="mb-4 aspect-video w-full rounded-md object-cover" /> : null}
-            <h2 className="font-semibold">{product.url ? <a href={product.url} target="_blank">{product.name}</a> : product.name}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{product.store || "Brak sklepu"} · {product.rooms?.name ?? "Cały projekt"}</p>
-            <div className="mt-4 flex flex-wrap gap-2"><Badge>{labelFor(labels.productStatus, product.status)}</Badge><Badge>{labelFor(labels.deliveryStatus, product.delivery_status)}</Badge></div>
-            <p className="mt-3 text-sm">Cena: {formatCurrency(product.price)}</p>
-            <p className="text-sm">Dostawa: {formatDate(product.expected_delivery_date)}</p>
-            <form action={deleteRow.bind(null, projectId, "products", "/products")} className="mt-4"><input type="hidden" name="id" value={product.id} /><Button variant="danger">Usuń</Button></form>
-          </Card>
-        ))}
-      </div>
+
+      {!list.length ? (
+        <EmptyState title="Brak produktów" description="Dodaj pierwszy produkt powyżej." className="mt-6" />
+      ) : (
+        <Card className="mt-6">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted-foreground">
+                  <th className="pb-2 pr-4 font-medium">Produkt</th>
+                  <th className="pb-2 pr-4 font-medium">Cena</th>
+                  <th className="pb-2 pr-4 font-medium">Status</th>
+                  <th className="pb-2 pr-4 font-medium">Dostawa</th>
+                  <th className="pb-2 pr-4 font-medium">Pomieszczenie</th>
+                  <th className="pb-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {list.map((p) => {
+                  const roomName = roomList.find((r) => r.id === p.room_id)?.name;
+                  return (
+                    <tr key={p.id} className="border-b border-border/50 last:border-0">
+                      <td className="py-2 pr-4">
+                        <div>
+                          <p className="font-medium">{p.name}</p>
+                          {p.category && <p className="text-xs text-muted-foreground">{p.category}</p>}
+                          {p.url && (
+                            <a href={p.url} target="_blank" rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3" /> {p.store || "Link"}
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4">{formatCurrency(p.price)}</td>
+                      <td className="py-2 pr-4">
+                        <Badge variant={statusVariant(p.status)}>
+                          {labelFor(labels.productStatus, p.status)}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-4">
+                        <div>
+                          <Badge variant={statusVariant(p.delivery_status)}>
+                            {labelFor(labels.deliveryStatus, p.delivery_status)}
+                          </Badge>
+                          {p.expected_delivery_date && (
+                            <p className="text-xs text-muted-foreground mt-1">{formatDate(p.expected_delivery_date)}</p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-4 text-muted-foreground">{roomName ?? "—"}</td>
+                      <td className="py-2">
+                        <DeleteButton
+                          action={deleteProduct.bind(null, projectId)}
+                          id={p.id}
+                          confirmMessage={`Usuń produkt "${p.name}"?`}
+                          size="sm"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </>
   );
 }

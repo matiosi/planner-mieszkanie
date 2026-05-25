@@ -1,54 +1,79 @@
 import Link from "next/link";
-import { createDemoProject } from "@/app/actions";
 import { AppShell } from "@/components/app-shell";
-import { Button, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
-import { formatCurrency, numberFormatter } from "@/lib/formatters";
-import { labelFor, labels } from "@/lib/labels";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requireUser } from "@/lib/data";
+import { formatCurrency, formatArea } from "@/lib/formatters";
+import { labelFor, labels, statusVariant } from "@/lib/labels";
+import { createDemoProject } from "@/app/actions/projects";
+import { Plus, Wand2 } from "lucide-react";
 
 export default async function ProjectsPage() {
-  const { supabase, user } = await requireUser();
+  const { supabase } = await requireUser();
   const { data: projects } = await supabase
     .from("projects")
-    .select("*")
-    .eq("owner_id", user.id)
-    .order("updated_at", { ascending: false });
+    .select("id,name,area,target_budget,stage,created_at")
+    .order("created_at", { ascending: false });
 
   return (
     <AppShell>
       <PageHeader
         title="Projekty"
-        description="Wybierz mieszkanie albo utwórz nowy projekt wykończenia."
+        description="Zarządzaj swoimi projektami wykończenia mieszkania."
         actions={
-          <>
+          <div className="flex gap-2">
             <form action={createDemoProject}>
-              <Button variant="secondary">Utwórz przykładowe mieszkanie</Button>
+              <Button type="submit" variant="secondary" size="sm">
+                <Wand2 className="h-4 w-4" />
+                Przykładowe mieszkanie
+              </Button>
             </form>
-            <LinkButton href="/projects/new">Nowy projekt</LinkButton>
-          </>
+            <Button asChild size="sm">
+              <Link href="/projects/new">
+                <Plus className="h-4 w-4" />
+                Nowy projekt
+              </Link>
+            </Button>
+          </div>
         }
       />
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {projects?.length ? (
-          projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`}>
-              <Card className="h-full hover:border-primary">
-                <h2 className="text-lg font-semibold">{project.name}</h2>
-                <p className="mt-2 text-sm text-muted-foreground">{project.style || "Brak opisu stylu"}</p>
-                <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                  <span>Metraż: {project.area ? `${numberFormatter.format(project.area)} m²` : "Brak"}</span>
-                  <span>Budżet: {formatCurrency(project.target_budget)}</span>
-                  <span className="col-span-2">Etap: {labelFor(labels.projectStage, project.stage)}</span>
+
+      {!projects?.length ? (
+        <EmptyState
+          title="Brak projektów"
+          description="Utwórz swój pierwszy projekt lub wczytaj przykładowe mieszkanie."
+          action={
+            <Button asChild>
+              <Link href="/projects/new">
+                <Plus className="h-4 w-4" />
+                Nowy projekt
+              </Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p) => (
+            <Link key={p.id} href={`/projects/${p.id}`} className="block">
+              <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="font-semibold truncate">{p.name}</h2>
+                  <Badge variant={statusVariant(p.stage)} className="shrink-0">
+                    {labelFor(labels.projectStage, p.stage)}
+                  </Badge>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                  {p.area && <span>📐 {formatArea(p.area)}</span>}
+                  {p.target_budget && <span>💰 {formatCurrency(p.target_budget)}</span>}
                 </div>
               </Card>
             </Link>
-          ))
-        ) : (
-          <div className="md:col-span-2 xl:col-span-3">
-            <EmptyState title="Nie masz jeszcze projektów" description="Utwórz pierwszy projekt albo dodaj przykładowe mieszkanie." />
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </AppShell>
   );
 }

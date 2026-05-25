@@ -90,4 +90,16 @@ SUPABASE_ACCESS_TOKEN
 SUPABASE_PROJECT_REF
 ```
 
+`SUPABASE_PROJECT_REF` is not the project name. It is the Supabase project ref from the dashboard URL:
+
+```txt
+https://supabase.com/dashboard/project/YOUR_PROJECT_REF
+```
+
+Example format:
+
+```txt
+abcdefghijklmnopqrst
+```
+
 Do not commit service role keys or database passwords.

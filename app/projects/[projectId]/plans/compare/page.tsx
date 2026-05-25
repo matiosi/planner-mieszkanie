@@ -1,48 +1,155 @@
-import { deleteRow, upsertPlanDifference } from "@/app/actions";
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { DeleteButton } from "@/components/delete-button";
 import { PlanComparison } from "@/components/plan-comparison";
-import { Badge, Button, Card, Field, PageHeader, inputClass } from "@/components/ui";
+import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { requireProject, signedUrl } from "@/lib/data";
-import { labelFor, labels } from "@/lib/labels";
+import { upsertPlanDifference, deletePlanDifference } from "@/app/actions/plans";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
-export default async function ComparePlansPage({ params }: { params: Promise<{ projectId: string }> }) {
+export default async function PlanComparePage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
   const { projectId } = await params;
   const { supabase } = await requireProject(projectId);
-  const [plans, rooms, differences] = await Promise.all([
-    supabase.from("project_plans").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
-    supabase.from("rooms").select("id,name").eq("project_id", projectId).order("name"),
-    supabase.from("plan_differences").select("*, rooms(name)").eq("project_id", projectId).order("created_at", { ascending: false })
+
+  const [{ data: plans }, { data: differences }, { data: rooms }] = await Promise.all([
+    supabase
+      .from("project_plans")
+      .select("id,plan_type,storage_bucket,storage_path,is_current,version_label")
+      .eq("project_id", projectId),
+    supabase
+      .from("plan_differences")
+      .select("id,title,description,status,priority,room_id")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    supabase.from("rooms").select("id,name").eq("project_id", projectId).order("sort_order"),
   ]);
-  const original = plans.data?.find((plan) => plan.plan_type === "ORIGINAL");
-  const designer = plans.data?.find((plan) => plan.plan_type === "DESIGNER");
+
+  const planList = plans ?? [];
+  const diffList = differences ?? [];
+  const roomList = rooms ?? [];
+
+  const originalPlan = planList.find((p) => p.plan_type === "ORIGINAL" && p.is_current)
+    ?? planList.find((p) => p.plan_type === "ORIGINAL");
+  const designerPlan = planList.find((p) => p.plan_type === "DESIGNER" && p.is_current)
+    ?? planList.find((p) => p.plan_type === "DESIGNER");
+
+  const [originalUrl, designerUrl] = await Promise.all([
+    signedUrl(originalPlan?.storage_bucket, originalPlan?.storage_path),
+    signedUrl(designerPlan?.storage_bucket, designerPlan?.storage_path),
+  ]);
+
+  async function addDifference(formData: FormData) {
+    "use server";
+    await upsertPlanDifference(projectId, formData);
+  }
 
   return (
     <>
-      <PageHeader title="Porównanie planów" description="Widok 50/50 z przybliżaniem, przesuwaniem i ręcznymi notatkami różnic." />
+      <PageHeader
+        title="Porównanie planów"
+        description="Oceń różnice między planem pierwotnym a projektem."
+        actions={
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/projects/${projectId}/plans`}>← Plany</Link>
+          </Button>
+        }
+      />
+
+      {/* Split view */}
       <div className="mt-6">
-        <PlanComparison
-          originalUrl={await signedUrl(original?.storage_bucket, original?.storage_path)}
-          designerUrl={await signedUrl(designer?.storage_bucket, designer?.storage_path)}
-        />
+        <PlanComparison originalUrl={originalUrl} designerUrl={designerUrl} />
       </div>
-      <Card className="mt-6">
-        <form action={upsertPlanDifference.bind(null, projectId)} className="grid gap-3 md:grid-cols-6">
-          <Field label="Tytuł"><input className={inputClass} name="title" required /></Field>
-          <Field label="Pokój"><select className={inputClass} name="room_id"><option value="">Cały projekt</option>{rooms.data?.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}</select></Field>
-          <Field label="Status"><select className={inputClass} name="status">{Object.entries(labels.planDifferenceStatus).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
-          <Field label="Priorytet"><select className={inputClass} name="priority"><option value="LOW">Niska</option><option value="MEDIUM">Średnia</option><option value="HIGH">Wysoka</option></select></Field>
-          <Field label="Opis"><input className={inputClass} name="description" /></Field>
-          <div className="flex items-end"><Button className="w-full">Dodaj</Button></div>
-        </form>
-      </Card>
-      <div className="mt-6 grid gap-3">
-        {differences.data?.map((item) => (
-          <Card key={item.id} className="grid gap-3 md:grid-cols-[1fr_150px_120px_90px] md:items-center">
-            <div><h2 className="font-medium">{item.title}</h2><p className="text-sm text-muted-foreground">{item.rooms?.name ?? "Cały projekt"} · {item.description}</p></div>
-            <Badge>{labelFor(labels.planDifferenceStatus, item.status)}</Badge>
-            <Badge>{item.priority}</Badge>
-            <form action={deleteRow.bind(null, projectId, "plan_differences", "/plans/compare")}><input type="hidden" name="id" value={item.id} /><Button variant="danger">Usuń</Button></form>
-          </Card>
-        ))}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+        {/* Lista różnic */}
+        <Card>
+          <h2 className="font-semibold mb-4">
+            Różnice ({diffList.filter((d) => d.status === "NEEDS_DISCUSSION").length} do omówienia)
+          </h2>
+          {!diffList.length ? (
+            <p className="text-sm text-muted-foreground">Brak zidentyfikowanych różnic.</p>
+          ) : (
+            <div className="space-y-3">
+              {diffList.map((diff) => {
+                const roomName = roomList.find((r) => r.id === diff.room_id)?.name;
+                return (
+                  <div key={diff.id} className="rounded-md border border-border p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-medium text-sm">{diff.title}</p>
+                      <Badge variant={statusVariant(diff.status)}>
+                        {labelFor(labels.planDifferenceStatus, diff.status)}
+                      </Badge>
+                    </div>
+                    {diff.description && (
+                      <p className="mt-1 text-sm text-muted-foreground">{diff.description}</p>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      <Badge variant={statusVariant(diff.priority)}>
+                        {labelFor(labels.priority, diff.priority)}
+                      </Badge>
+                      {roomName && <Badge variant="gray">{roomName}</Badge>}
+                    </div>
+                    <div className="mt-2">
+                      <DeleteButton
+                        action={deletePlanDifference.bind(null, projectId)}
+                        id={diff.id}
+                        confirmMessage={`Usuń różnicę "${diff.title}"?`}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* Formularz dodawania */}
+        <Card>
+          <h2 className="font-semibold mb-4">Dodaj różnicę</h2>
+          <form action={addDifference} className="grid gap-3">
+            <Field label="Tytuł *">
+              <Input name="title" required placeholder="np. Przesunięcie ściany w salonie" />
+            </Field>
+            <Field label="Opis">
+              <Textarea name="description" rows={2} placeholder="Szczegóły różnicy…" />
+            </Field>
+            <Field label="Status">
+              <Select name="status" defaultValue="NEEDS_DISCUSSION">
+                {Object.entries(labels.planDifferenceStatus).map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Priorytet">
+              <Select name="priority" defaultValue="MEDIUM">
+                <option value="LOW">Niska</option>
+                <option value="MEDIUM">Średnia</option>
+                <option value="HIGH">Wysoka</option>
+              </Select>
+            </Field>
+            <Field label="Pomieszczenie">
+              <Select name="room_id" defaultValue="">
+                <option value="">— brak —</option>
+                {roomList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </Select>
+            </Field>
+            <Button type="submit" size="sm">
+              <Plus className="h-4 w-4" /> Dodaj różnicę
+            </Button>
+          </form>
+        </Card>
       </div>
     </>
   );

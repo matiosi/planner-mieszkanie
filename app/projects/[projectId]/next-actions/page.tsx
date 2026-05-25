@@ -1,75 +1,122 @@
+import { PageHeader } from "@/components/ui/page-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { requireProject } from "@/lib/data";
+import { computeNextActions } from "@/lib/next-actions";
+import { CheckCircle2, AlertTriangle, AlertCircle, Info, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Badge, Card, PageHeader } from "@/components/ui";
-import { formatCurrency, formatDate } from "@/lib/formatters";
-import { getDashboard } from "@/lib/data";
 
-export default async function NextActionsPage({ params }: { params: Promise<{ projectId: string }> }) {
+const urgencyConfig = {
+  critical: {
+    icon: AlertCircle,
+    badgeVariant: "red" as const,
+    label: "Krytyczne",
+    bg: "bg-red-50 border-red-200",
+  },
+  high: {
+    icon: AlertTriangle,
+    badgeVariant: "amber" as const,
+    label: "Pilne",
+    bg: "bg-amber-50 border-amber-200",
+  },
+  medium: {
+    icon: Info,
+    badgeVariant: "blue" as const,
+    label: "Ważne",
+    bg: "bg-blue-50 border-blue-200",
+  },
+  low: {
+    icon: CheckCircle2,
+    badgeVariant: "gray" as const,
+    label: "Do zrobienia",
+    bg: "bg-muted border-border",
+  },
+};
+
+export default async function NextActionsPage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
   const { projectId } = await params;
-  const { rooms, budget, tasks, decisions, products, inspirations, differences } = await getDashboard(projectId);
-  const today = new Date().toISOString().slice(0, 10);
-  const actions = [
-    ...tasks.filter((task) => task.status !== "DONE" && task.due_date && task.due_date < today).map((task) => ({
-      title: task.title,
-      reason: `Termin minął: ${formatDate(task.due_date)}`,
-      href: `/projects/${projectId}/tasks`,
-      priority: "Wysoka"
-    })),
-    ...tasks.filter((task) => task.status === "BLOCKED").map((task) => ({
-      title: task.title,
-      reason: task.blocked_by ? `Zablokowane przez: ${task.blocked_by}` : "Zadanie jest zablokowane",
-      href: `/projects/${projectId}/tasks`,
-      priority: "Wysoka"
-    })),
-    ...decisions.filter((decision) => decision.status !== "DECIDED").slice(0, 5).map((decision) => ({
-      title: decision.title,
-      reason: "Decyzja jest nadal otwarta",
-      href: `/projects/${projectId}/decisions`,
-      priority: "Średnia"
-    })),
-    ...budget.filter((item) => Number(item.actual_cost ?? 0) > Number(item.planned_cost ?? 0) && Number(item.planned_cost ?? 0) > 0).map((item) => ({
-      title: item.name,
-      reason: `Koszt przekracza plan o ${formatCurrency(Number(item.actual_cost) - Number(item.planned_cost))}`,
-      href: `/projects/${projectId}/budget`,
-      priority: "Wysoka"
-    })),
-    ...rooms.filter((room) => !inspirations.some((item) => item.room_id === room.id && item.selected_for_designer)).map((room) => ({
-      title: room.name,
-      reason: "Brak wybranych inspiracji dla projektanta",
-      href: `/projects/${projectId}/inspirations`,
-      priority: "Niska"
-    })),
-    ...differences.filter((item) => item.status === "NEEDS_DISCUSSION").map((item) => ({
-      title: item.title,
-      reason: "Różnica w planach wymaga omówienia",
-      href: `/projects/${projectId}/plans/compare`,
-      priority: "Średnia"
-    })),
-    ...products.filter((item) => ["ORDERED", "SHIPPED", "DELAYED"].includes(item.delivery_status)).map((item) => ({
-      title: item.name,
-      reason: "Produkt jest zamówiony, ale nie został oznaczony jako dostarczony",
-      href: `/projects/${projectId}/products`,
-      priority: item.delivery_status === "DELAYED" ? "Wysoka" : "Średnia"
-    }))
-  ].slice(0, 12);
+  const { supabase, project } = await requireProject(projectId);
+
+  const actions = await computeNextActions(projectId, supabase);
+
+  const critical = actions.filter((a) => a.urgency === "critical");
+  const high = actions.filter((a) => a.urgency === "high");
+  const medium = actions.filter((a) => a.urgency === "medium");
+  const low = actions.filter((a) => a.urgency === "low");
 
   return (
     <>
-      <PageHeader title="Co teraz?" description="Deterministyczna lista kolejnych działań na podstawie danych projektu. Bez AI." />
-      <div className="mt-6 grid gap-3">
-        {actions.length ? actions.map((action, index) => (
-          <Link href={action.href} key={`${action.title}-${index}`}>
-            <Card className="hover:border-primary">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold">{action.title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{action.reason}</p>
-                </div>
-                <Badge tone={action.priority === "Wysoka" ? "red" : action.priority === "Średnia" ? "amber" : "gray"}>{action.priority}</Badge>
-              </div>
-            </Card>
-          </Link>
-        )) : <Card>Nie ma pilnych działań. Dane projektu nie wskazują obecnie blokad ani przekroczeń.</Card>}
-      </div>
+      <PageHeader
+        title="Co teraz?"
+        description={`Priorytety dla projektu: ${project.name}`}
+      />
+
+      {actions.length === 0 ? (
+        <EmptyState
+          title="Wszystko w porządku!"
+          description="Brak pilnych zadań. Projekt idzie zgodnie z planem."
+          className="mt-6"
+        />
+      ) : (
+        <div className="mt-6 space-y-6">
+          {/* Summary bar */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center">
+              <p className="text-2xl font-bold text-red-600">{critical.length}</p>
+              <p className="text-xs text-red-500 mt-0.5">Krytyczne</p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center">
+              <p className="text-2xl font-bold text-amber-600">{high.length}</p>
+              <p className="text-xs text-amber-500 mt-0.5">Pilne</p>
+            </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
+              <p className="text-2xl font-bold text-blue-600">{medium.length}</p>
+              <p className="text-xs text-blue-500 mt-0.5">Ważne</p>
+            </div>
+            <div className="rounded-lg border border-border bg-muted p-3 text-center">
+              <p className="text-2xl font-bold text-muted-foreground">{low.length}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Do zrobienia</p>
+            </div>
+          </div>
+
+          {/* Action list */}
+          <Card>
+            <h2 className="font-semibold mb-4">Lista priorytetów</h2>
+            <div className="space-y-2">
+              {actions.map((action, i) => {
+                const config = urgencyConfig[action.urgency];
+                const Icon = config.icon;
+                return (
+                  <Link
+                    key={i}
+                    href={action.href}
+                    className={`flex items-start gap-3 rounded-lg border p-3 transition-opacity hover:opacity-80 ${config.bg}`}
+                  >
+                    <Icon className="h-5 w-5 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{action.title}</span>
+                        <Badge variant="gray" className="text-xs">{action.category}</Badge>
+                      </div>
+                      {action.description && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {action.description}
+                        </p>
+                      )}
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
+                  </Link>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+      )}
     </>
   );
 }
