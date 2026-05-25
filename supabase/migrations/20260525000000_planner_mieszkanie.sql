@@ -472,7 +472,7 @@ create table public.project_members (
 create table public.share_links (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
-  token text not null unique default encode(gen_random_bytes(32), 'hex'),
+  token text not null unique default md5(random()::text || clock_timestamp()::text || random()::text),
   scope share_scope not null default 'WHOLE_PROJECT',
   room_ids uuid[],
   expires_at timestamptz,

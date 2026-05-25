@@ -506,7 +506,7 @@ create table if not exists public.project_members (
 create table if not exists public.share_links (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects(id) on delete cascade,
-  token text not null unique default encode(gen_random_bytes(32), 'hex'),
+  token text not null unique default md5(random()::text || clock_timestamp()::text || random()::text),
   scope share_scope not null default 'WHOLE_PROJECT',
   room_ids uuid[],
   expires_at timestamptz,
@@ -618,7 +618,7 @@ create table if not exists public.pending_invitations (
   project_id uuid not null references public.projects(id) on delete cascade,
   email text not null,
   role member_role not null default 'EDITOR',
-  token text not null unique default encode(gen_random_bytes(16), 'hex'),
+  token text not null unique default md5(random()::text || clock_timestamp()::text),
   created_by uuid not null references auth.users(id),
   created_at timestamptz not null default now()
 );
