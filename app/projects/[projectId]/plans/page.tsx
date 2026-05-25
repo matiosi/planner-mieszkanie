@@ -64,7 +64,7 @@ export default async function PlansPage({
       {/* Upload */}
       <Card className="mt-6">
         <h2 className="font-semibold mb-4">Wgraj plan</h2>
-        <form action={addPlan} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" encType="multipart/form-data">
+        <form action={addPlan} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Typ planu">
             <Select name="plan_type" defaultValue="ORIGINAL">
               <option value="ORIGINAL">Plan pierwotny</option>

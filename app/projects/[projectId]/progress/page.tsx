@@ -62,7 +62,7 @@ export default async function ProgressPage({
       {/* Upload form */}
       <Card className="mt-6">
         <h2 className="font-semibold mb-4">Dodaj zdjęcie</h2>
-        <form action={addPhoto} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" encType="multipart/form-data">
+        <form action={addPhoto} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Zdjęcie *" className="sm:col-span-2">
             <Input name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
           </Field>

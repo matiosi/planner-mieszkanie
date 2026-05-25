@@ -58,7 +58,7 @@ export default async function DocumentsPage({
       {/* Upload form */}
       <Card className="mt-6">
         <h2 className="font-semibold mb-4">Dodaj dokument</h2>
-        <form action={addDocument} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" encType="multipart/form-data">
+        <form action={addDocument} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Tytuł *" className="sm:col-span-2">
             <Input name="title" required placeholder="np. Faktura za płytki" />
           </Field>

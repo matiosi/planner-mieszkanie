@@ -66,7 +66,7 @@ export default async function InspirationsPage({
       {/* Formularz dodawania */}
       <Card className="mt-6">
         <h2 className="font-semibold mb-4">Dodaj inspirację</h2>
-        <form action={addInspiration} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" encType="multipart/form-data">
+        <form action={addInspiration} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Tytuł *" className="sm:col-span-2">
             <Input name="title" required placeholder="np. Łazienka w stylu japandi" />
           </Field>
