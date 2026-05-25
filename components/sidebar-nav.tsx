@@ -7,45 +7,73 @@ import {
   Home, Wand2, Sofa, ReceiptText, ListChecks, ShoppingCart, ShoppingBag,
   Truck, Lightbulb, Users, Image, Map, FileText, Shield, Ruler,
   Calculator, Camera, ClipboardCheck, Calendar, CreditCard, TrendingUp,
-  MessageSquare, Share2, Download, PaintBucket
+  MessageSquare, Download, PaintBucket, AlertOctagon, Users2,
+  CheckSquare, BookImage,
 } from "lucide-react";
 
-const navItems = [
-  { label: "Pulpit", href: "", icon: Home },
-  { label: "Co teraz?", href: "next-actions", icon: Wand2 },
-  { label: "Pomieszczenia", href: "rooms", icon: Sofa },
-  { label: "Budżet", href: "budget", icon: ReceiptText },
-  { label: "Zadania", href: "tasks", icon: ListChecks },
-  { label: "Produkty", href: "products", icon: ShoppingBag },
-  { label: "Zakupy", href: "shopping-list", icon: ShoppingCart },
-  { label: "Dostawy", href: "deliveries", icon: Truck },
-  { label: "Decyzje", href: "decisions", icon: Lightbulb },
-  { label: "Wykonawcy", href: "vendors", icon: Users },
-  { label: "Inspiracje", href: "inspirations", icon: Image },
-  { label: "Plany", href: "plans", icon: Map },
-  { label: "Dokumenty", href: "documents", icon: FileText },
-  { label: "Gwarancje", href: "warranties", icon: Shield },
-  { label: "Pomiary", href: "measurements", icon: Ruler },
-  { label: "Kalkulatory", href: "calculators", icon: Calculator },
-  { label: "Postęp prac", href: "progress", icon: Camera },
-  { label: "Odbiór prac", href: "punch-list", icon: ClipboardCheck },
-  { label: "Harmonogram", href: "schedule", icon: Calendar },
-  { label: "Płatności", href: "payments", icon: CreditCard },
-  { label: "Cashflow", href: "cashflow", icon: TrendingUp },
-  { label: "Pytania", href: "questions", icon: MessageSquare },
-  { label: "Udostępnianie", href: "share", icon: Share2 },
-  { label: "Eksport", href: "export", icon: Download },
-];
-
-// Pogrupowana nawigacja
 const navGroups = [
-  { label: "Główne", items: navItems.slice(0, 2) },
-  { label: "Projekt", items: navItems.slice(2, 6) },
-  { label: "Zakupy", items: navItems.slice(6, 9) },
-  { label: "Realizacja", items: navItems.slice(9, 14) },
-  { label: "Technikalia", items: navItems.slice(14, 18) },
-  { label: "Finanse", items: navItems.slice(18, 21) },
-  { label: "Inne", items: navItems.slice(21) },
+  {
+    label: "Główne",
+    items: [
+      { label: "Pulpit", href: "", icon: Home },
+      { label: "Co teraz?", href: "next-actions", icon: Wand2 },
+    ],
+  },
+  {
+    label: "Projekt",
+    items: [
+      { label: "Pomieszczenia", href: "rooms", icon: Sofa },
+      { label: "Budżet", href: "budget", icon: ReceiptText },
+      { label: "Ograniczenia", href: "constraints", icon: AlertOctagon },
+      { label: "Zadania", href: "tasks", icon: ListChecks },
+      { label: "Produkty", href: "products", icon: ShoppingBag },
+    ],
+  },
+  {
+    label: "Zakupy",
+    items: [
+      { label: "Lista zakupów", href: "shopping-list", icon: ShoppingCart },
+      { label: "Dostawy", href: "deliveries", icon: Truck },
+      { label: "Decyzje", href: "decisions", icon: Lightbulb },
+    ],
+  },
+  {
+    label: "Realizacja",
+    items: [
+      { label: "Wykonawcy", href: "vendors", icon: Users },
+      { label: "Inspiracje", href: "inspirations", icon: Image },
+      { label: "Pinterest", href: "inspirations/pinterest", icon: BookImage },
+      { label: "Plany", href: "plans", icon: Map },
+      { label: "Dokumenty", href: "documents", icon: FileText },
+      { label: "Gwarancje", href: "warranties", icon: Shield },
+      { label: "Checklistry", href: "checklist", icon: CheckSquare },
+    ],
+  },
+  {
+    label: "Technikalia",
+    items: [
+      { label: "Pomiary", href: "measurements", icon: Ruler },
+      { label: "Kalkulatory", href: "calculators", icon: Calculator },
+      { label: "Postęp prac", href: "progress", icon: Camera },
+      { label: "Odbiór prac", href: "punch-list", icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "Finanse",
+    items: [
+      { label: "Harmonogram", href: "schedule", icon: Calendar },
+      { label: "Płatności", href: "payments", icon: CreditCard },
+      { label: "Cashflow", href: "cashflow", icon: TrendingUp },
+    ],
+  },
+  {
+    label: "Inne",
+    items: [
+      { label: "Pytania", href: "questions", icon: MessageSquare },
+      { label: "Członkowie", href: "members", icon: Users2 },
+      { label: "Eksport", href: "export", icon: Download },
+    ],
+  },
 ];
 
 export function SidebarNav({ projectId }: { projectId: string }) {

@@ -59,3 +59,18 @@ export function formatPercent(part: number, total: number): string {
   if (!total) return "0%";
   return `${Math.round((part / total) * 100)}%`;
 }
+
+export function formatDistanceToNow(value?: string | Date | null): string {
+  if (!value) return "";
+  const date = new Date(value);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "przed chwilą";
+  if (diffMin < 60) return `${diffMin} min temu`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} godz. temu`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD} dni temu`;
+  return dateFormatter.format(date);
+}
