@@ -7,8 +7,7 @@ import {
   Home, Wand2, Sofa, ReceiptText, ListChecks, ShoppingCart, ShoppingBag,
   Truck, Lightbulb, Users, Image, Map, FileText, Shield, Ruler,
   Calculator, Camera, ClipboardCheck, Calendar, CreditCard, TrendingUp,
-  MessageSquare, Download, PaintBucket, AlertOctagon, Users2,
-  CheckSquare, BookImage,
+  MessageSquare, Download, PaintBucket, AlertOctagon, Users2, CheckSquare,
 } from "lucide-react";
 
 const navGroups = [
@@ -42,7 +41,6 @@ const navGroups = [
     items: [
       { label: "Wykonawcy", href: "vendors", icon: Users },
       { label: "Inspiracje", href: "inspirations", icon: Image },
-      { label: "Pinterest", href: "inspirations/pinterest", icon: BookImage },
       { label: "Plany", href: "plans", icon: Map },
       { label: "Dokumenty", href: "documents", icon: FileText },
       { label: "Gwarancje", href: "warranties", icon: Shield },
