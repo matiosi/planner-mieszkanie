@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { InspirationGallery } from "@/components/inspiration-gallery";
+import { ImportUrlForm } from "@/components/import-url-form";
 import { requireProject, signedUrl } from "@/lib/data";
 import { upsertInspiration } from "@/app/actions/inspirations";
 import { Plus } from "lucide-react";
@@ -89,6 +90,14 @@ export default async function InspirationsPage({
             </Button>
           </div>
         </form>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="font-semibold mb-1">Importuj z linku</h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Wklej link do pina Pinterest, strony z inspiracją lub bezpośredni URL do zdjęcia — obraz zostanie pobrany i zapisany.
+        </p>
+        <ImportUrlForm projectId={projectId} roomList={roomList} />
       </Card>
 
       {!list.length ? (
