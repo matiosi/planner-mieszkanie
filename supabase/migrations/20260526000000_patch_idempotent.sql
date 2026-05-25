@@ -47,13 +47,13 @@ begin
 end;
 $$;
 
-drop function if exists public.is_project_owner(uuid);
+drop function if exists public.is_project_owner(uuid) cascade;
 create function public.is_project_owner(pid uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists(select 1 from public.projects where id = pid and owner_id = auth.uid());
 $$;
 
-drop function if exists public.has_project_access(uuid);
+drop function if exists public.has_project_access(uuid) cascade;
 create function public.has_project_access(pid uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists(
