@@ -1,11 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export async function loginWithGoogle() {
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  // Czytaj aktualny host z nagłówków requesta (działa lokalnie i na Vercel)
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const proto = host.startsWith("localhost") ? "http" : "https";
+  const siteUrl = `${proto}://${host}`;
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
