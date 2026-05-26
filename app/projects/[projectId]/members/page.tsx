@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
 import { CopyButton } from "@/components/copy-button";
 import { requireProject } from "@/lib/data";
+import { getPublicSiteUrl } from "@/lib/env";
 import { inviteMember, removeMember, revokeInvitation } from "@/app/actions/members";
 import { Users2, Clock } from "lucide-react";
 
@@ -51,7 +52,7 @@ export default async function MembersPage({
   const memberList = members ?? [];
   const invitationList = invitations ?? [];
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const baseUrl = getPublicSiteUrl();
 
   return (
     <>
