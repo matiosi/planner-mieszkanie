@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav, SidebarLogo } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { MobileSidebar } from "@/components/mobile-sidebar";
 
 export async function AppShell({
   projectId,
@@ -16,12 +17,13 @@ export async function AppShell({
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <header className="sticky top-0 z-40 flex h-14 items-center border-b border-border bg-background px-4 md:hidden">
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
         <SidebarLogo />
+        <MobileSidebar projectId={projectId} userEmail={user?.email} />
       </header>
 
       <div>
-        {/* Sidebar */}
+        {/* Desktop Sidebar */}
         <aside className="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:z-50 md:w-[260px] md:border-r md:border-border md:bg-background">
           <div className="flex h-14 items-center border-b border-border px-4">
             <SidebarLogo />
