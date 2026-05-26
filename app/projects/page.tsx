@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/data";
 import { formatCurrency, formatArea, formatDate } from "@/lib/formatters";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { createDemoProject } from "@/app/actions/projects";
-import { Plus, Wand2, Ruler, Wallet, CalendarDays, ChevronRight } from "lucide-react";
+import { Plus, Wand2, Ruler, Wallet, CalendarDays, ChevronRight, BookOpen } from "lucide-react";
 
 export default async function ProjectsPage() {
   const { supabase } = await requireUser();
@@ -24,6 +24,12 @@ export default async function ProjectsPage() {
         description="Zarządzaj swoimi projektami wykończenia mieszkania."
         actions={
           <div className="flex gap-2">
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/library">
+                <BookOpen className="h-4 w-4" />
+                Biblioteka
+              </Link>
+            </Button>
             <form action={createDemoProject}>
               <Button type="submit" variant="secondary" size="sm">
                 <Wand2 className="h-4 w-4" />

@@ -12,6 +12,7 @@ export async function uploadProgressPhoto(projectId: string, formData: FormData)
   const note = getString(formData, "note", "");
   const roomId = getString(formData, "room_id", "");
   const photoDate = getString(formData, "photo_date", new Date().toISOString().split("T")[0]);
+  const phase = getString(formData, "phase", "DURING");
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) throw new Error("Zdjęcie jest wymagane");
@@ -34,6 +35,7 @@ export async function uploadProgressPhoto(projectId: string, formData: FormData)
     title: title || null,
     note: note || null,
     photo_date: photoDate,
+    phase,
   });
 
   if (error) throw new Error(error.message);
