@@ -26,7 +26,7 @@ export function BeforeAfterSlider({ before, after }: Props) {
   if (!beforePhoto || !afterPhoto) {
     return (
       <p className="text-sm text-muted-foreground">
-        Potrzebujesz co najmniej jednego zdjęcia z etapu „Przed" i jednego z „Po".
+        Potrzebujesz co najmniej jednego zdjęcia z etapu „Przed” i jednego z „Po”.
       </p>
     );
   }
