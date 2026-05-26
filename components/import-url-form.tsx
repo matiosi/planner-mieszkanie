@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { importInspirationFromUrl } from "@/app/actions/inspirations";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download } from "lucide-react";
@@ -28,7 +29,7 @@ export function ImportUrlForm({ projectId, roomList }: Props) {
   }, [state.success]);
 
   return (
-    <form ref={formRef} action={formAction} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <form ref={formRef} action={formAction} className="grid gap-4 sm:grid-cols-2">
       <Field label="Link do strony / pina *" className="sm:col-span-2">
         <Input
           name="url"
@@ -37,9 +38,15 @@ export function ImportUrlForm({ projectId, roomList }: Props) {
           placeholder="https://www.pinterest.com/pin/… lub bezpośredni link do zdjęcia"
         />
       </Field>
-      <Field label="Tytuł (opcjonalnie)">
-        <Input name="title" placeholder="Zostanie pobrany z og:title" />
+
+      <Field label="Co Ci się podoba? (opcjonalnie)" className="sm:col-span-2">
+        <Textarea
+          name="description"
+          rows={2}
+          placeholder="np. Podoba mi się kolor ścian, faktura drewna na podłodze…"
+        />
       </Field>
+
       <Field label="Pomieszczenie">
         <Select name="room_id" defaultValue="">
           <option value="">— brak —</option>
@@ -49,19 +56,8 @@ export function ImportUrlForm({ projectId, roomList }: Props) {
         </Select>
       </Field>
 
-      {state.error && (
-        <div className="sm:col-span-2 lg:col-span-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-          {state.error}
-        </div>
-      )}
-      {state.success && (
-        <div className="sm:col-span-2 lg:col-span-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-700">
-          ✓ Inspiracja zaimportowana! Pojawi się w galerii.
-        </div>
-      )}
-
-      <div className="sm:col-span-2 lg:col-span-4">
-        <Button type="submit" size="sm" disabled={pending}>
+      <div className="flex items-end">
+        <Button type="submit" size="sm" disabled={pending} className="w-full sm:w-auto">
           {pending ? (
             <><Loader2 className="h-4 w-4 animate-spin" /> Pobieranie…</>
           ) : (
@@ -69,6 +65,17 @@ export function ImportUrlForm({ projectId, roomList }: Props) {
           )}
         </Button>
       </div>
+
+      {state.error && (
+        <div className="sm:col-span-2 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+          {state.error}
+        </div>
+      )}
+      {state.success && (
+        <div className="sm:col-span-2 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-700">
+          ✓ Inspiracja zaimportowana! Pojawi się w galerii.
+        </div>
+      )}
     </form>
   );
 }

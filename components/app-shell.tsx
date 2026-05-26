@@ -1,6 +1,7 @@
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { SidebarNav, SidebarLogo } from "@/components/sidebar-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export async function AppShell({
   projectId,
@@ -38,12 +39,13 @@ export async function AppShell({
             )}
           </div>
 
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-4 space-y-1">
             <div className="mb-2 rounded-md bg-muted px-3 py-2">
               <p className="text-xs text-muted-foreground truncate">
                 {user?.email ?? "Nie zalogowano"}
               </p>
             </div>
+            <ThemeToggle />
             <form action="/auth/signout" method="post">
               <button
                 type="submit"

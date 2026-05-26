@@ -27,14 +27,13 @@ export async function importInspirationFromUrl(
     const { supabase, user } = await requireProject(projectId);
     const url = getString(formData, "url")?.trim() ?? "";
     const roomId = getString(formData, "room_id") || null;
-    const manualTitle = getString(formData, "title")?.trim() || null;
+    const userNote = getString(formData, "description")?.trim() || null;
 
     if (!url) return { error: "Podaj URL." };
 
     // Czy to bezpośredni link do obrazka?
     const isDirectImage = /\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(url);
     let imageUrl: string;
-    let title = manualTitle ?? "Inspiracja";
 
     if (isDirectImage) {
       imageUrl = url;
@@ -55,11 +54,6 @@ export async function importInspirationFromUrl(
       if (!ogImage) return { error: "Nie znaleziono obrazka na tej stronie. Spróbuj wkleić bezpośredni link do zdjęcia." };
 
       imageUrl = ogImage;
-      if (!manualTitle) {
-        title = extractMeta(html, "og:title") ?? "Inspiracja";
-        // Pinterest dodaje " | Pinterest" do tytułu — usuń
-        title = title.replace(/\s*[\|–—]\s*Pinterest\s*$/i, "").trim() || "Inspiracja";
-      }
     }
 
     // Pobierz obrazek
@@ -92,7 +86,8 @@ export async function importInspirationFromUrl(
       project_id: projectId,
       room_id: roomId,
       source: "UPLOAD",
-      title,
+      title: "Inspiracja",
+      description: userNote,
       external_url: url,
       storage_bucket: "inspirations",
       storage_path: storagePath,

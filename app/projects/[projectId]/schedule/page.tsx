@@ -8,18 +8,24 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
+import { ScheduleGantt } from "@/components/schedule-gantt";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatDate } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertScheduleItem, deleteScheduleItem } from "@/app/actions/schedule";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, LayoutList, GanttChartSquare } from "lucide-react";
+import Link from "next/link";
 
 export default async function SchedulePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ view?: string }>;
 }) {
   const { projectId } = await params;
+  const { view } = await searchParams;
+  const isGantt = view === "gantt";
   const { supabase } = await requireProject(projectId);
 
   const [{ data: items }, { data: rooms }, { data: vendors }] = await Promise.all([
@@ -54,6 +60,20 @@ export default async function SchedulePage({
       <PageHeader
         title="Harmonogram"
         description={`${list.length} etapów`}
+        actions={
+          <div className="flex gap-1 rounded-md border border-border p-0.5">
+            <Button asChild size="sm" variant={isGantt ? "ghost" : "secondary"}>
+              <Link href={`/projects/${projectId}/schedule`}>
+                <LayoutList className="h-4 w-4" /> Lista
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant={isGantt ? "secondary" : "ghost"}>
+              <Link href={`/projects/${projectId}/schedule?view=gantt`}>
+                <GanttChartSquare className="h-4 w-4" /> Gantt
+              </Link>
+            </Button>
+          </div>
+        }
       />
 
       {/* Add form */}
@@ -99,9 +119,11 @@ export default async function SchedulePage({
         </form>
       </Card>
 
-      {/* Schedule list */}
+      {/* Gantt / Lista */}
       {!list.length ? (
         <EmptyState title="Brak etapów harmonogramu" description="Dodaj pierwszy etap powyżej." className="mt-6" />
+      ) : isGantt ? (
+        <ScheduleGantt items={list} roomList={roomList} />
       ) : (
         <div className="mt-6 space-y-6">
           {statusGroups.map(({ key, label }) => {

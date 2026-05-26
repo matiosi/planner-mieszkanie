@@ -71,6 +71,100 @@ export async function deleteProject(projectId: string, _formData?: FormData) {
   redirect("/projects");
 }
 
+export async function duplicateProject(projectId: string) {
+  const { supabase, user, project } = await requireProject(projectId);
+
+  // Utwórz nowy projekt
+  const { data: newProject, error: projErr } = await supabase
+    .from("projects")
+    .insert({
+      owner_id: user.id,
+      name: `${project.name} (kopia)`,
+      area: project.area,
+      target_budget: project.target_budget,
+      style: project.style,
+      stage: "PLANNING",
+      description: project.description,
+      contingency_percent: project.contingency_percent,
+    })
+    .select("id")
+    .single();
+
+  if (projErr || !newProject) throw new Error(projErr?.message ?? "Błąd duplikowania.");
+  const newId = newProject.id;
+
+  // Skopiuj pokoje — mapuj stary id → nowy id
+  const { data: rooms } = await supabase
+    .from("rooms")
+    .select("id,name,sort_order,area,concept_description,notes,budget_planned")
+    .eq("project_id", projectId)
+    .order("sort_order");
+
+  const roomMap: Record<string, string> = {};
+  if (rooms?.length) {
+    const { data: newRooms } = await supabase
+      .from("rooms")
+      .insert(rooms.map((r) => ({
+        project_id: newId,
+        name: r.name,
+        sort_order: r.sort_order,
+        area: r.area,
+        status: "NOT_STARTED",
+        concept_description: r.concept_description,
+        notes: r.notes,
+        budget_planned: r.budget_planned,
+      })))
+      .select("id,name");
+
+    if (newRooms) {
+      rooms.forEach((old, i) => {
+        if (newRooms[i]) roomMap[old.id] = newRooms[i].id;
+      });
+    }
+  }
+
+  // Skopiuj pozycje budżetu
+  const { data: budget } = await supabase
+    .from("budget_items")
+    .select("name,category,planned_cost,room_id,notes")
+    .eq("project_id", projectId);
+
+  if (budget?.length) {
+    await supabase.from("budget_items").insert(
+      budget.map((b) => ({
+        project_id: newId,
+        name: b.name,
+        category: b.category,
+        planned_cost: b.planned_cost,
+        status: "PLANNED",
+        room_id: b.room_id ? roomMap[b.room_id] ?? null : null,
+        notes: b.notes,
+      }))
+    );
+  }
+
+  // Skopiuj zadania (reset statusów)
+  const { data: tasks } = await supabase
+    .from("tasks")
+    .select("title,description,priority,room_id")
+    .eq("project_id", projectId);
+
+  if (tasks?.length) {
+    await supabase.from("tasks").insert(
+      tasks.map((t) => ({
+        project_id: newId,
+        title: t.title,
+        description: t.description,
+        status: "TODO",
+        priority: t.priority ?? "MEDIUM",
+        room_id: t.room_id ? roomMap[t.room_id] ?? null : null,
+      }))
+    );
+  }
+
+  redirect(projectPath(newId));
+}
+
 export async function createDemoProject() {
   const { supabase, user } = await requireUser();
 

@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { updateProject, deleteProject } from "@/app/actions/projects";
+import { updateProject, deleteProject, duplicateProject } from "@/app/actions/projects";
+import { Copy } from "lucide-react";
 import { DeleteButton } from "@/components/delete-button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -41,9 +42,16 @@ export default async function ProjectDashboardPage({
         title={project.name}
         description="Pulpit projektu — najważniejsze liczby i status prac."
         actions={
-          <Badge variant={statusVariant(project.stage)}>
-            {labelFor(labels.projectStage, project.stage)}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant={statusVariant(project.stage)}>
+              {labelFor(labels.projectStage, project.stage)}
+            </Badge>
+            <form action={duplicateProject.bind(null, projectId)}>
+              <Button type="submit" variant="secondary" size="sm">
+                <Copy className="h-4 w-4" /> Duplikuj
+              </Button>
+            </form>
+          </div>
         }
       />
 

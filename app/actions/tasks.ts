@@ -1,34 +1,50 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireProject, getString, getNumber } from "@/lib/data";
+import { requireProject, getString } from "@/lib/data";
+import { logActivity } from "@/lib/activity";
 
 const path = (pid: string) => `/projects/${pid}/tasks`;
 
 export async function upsertTask(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase, user } = await requireProject(projectId);
   const id = getString(formData, "id");
+  const title = getString(formData, "title");
+  const status = getString(formData, "status", "TODO");
   const payload = {
     project_id: projectId,
     room_id: getString(formData, "room_id") || null,
-    title: getString(formData, "title"),
+    title,
     description: getString(formData, "description"),
-    status: getString(formData, "status", "TODO"),
+    status,
     priority: getString(formData, "priority", "MEDIUM"),
     due_date: getString(formData, "due_date") || null,
   };
-  const { error } = id
-    ? await supabase.from("tasks").update(payload).eq("id", id).eq("project_id", projectId)
-    : await supabase.from("tasks").insert(payload);
+  const { data, error } = id
+    ? await supabase.from("tasks").update(payload).eq("id", id).eq("project_id", projectId).select("id").single()
+    : await supabase.from("tasks").insert(payload).select("id").single();
   if (error) throw new Error(error.message);
+  await logActivity(supabase, {
+    projectId, userId: user.id,
+    entityType: "task", entityId: data?.id,
+    action: id ? "updated" : "created",
+    description: id ? `Zadanie "${title}" zaktualizowane` : `Nowe zadanie: "${title}"`,
+  });
   revalidatePath(path(projectId));
 }
 
 export async function deleteTask(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase, user } = await requireProject(projectId);
   const id = getString(formData, "id");
+  const { data: task } = await supabase.from("tasks").select("title").eq("id", id).single();
   const { error } = await supabase.from("tasks").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
+  await logActivity(supabase, {
+    projectId, userId: user.id,
+    entityType: "task", entityId: id,
+    action: "deleted",
+    description: `Zadanie usunięte: "${task?.title ?? id}"`,
+  });
   revalidatePath(path(projectId));
 }
 

@@ -23,7 +23,7 @@ export default async function InspirationsPage({
   const [{ data: inspirations }, { data: rooms }] = await Promise.all([
     supabase
       .from("inspirations")
-      .select("id,title,source,category,external_url,storage_bucket,storage_path,designer_note,selected_for_designer,room_id")
+      .select("id,title,description,source,category,external_url,storage_bucket,storage_path,designer_note,selected_for_designer,room_id")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false }),
     supabase.from("rooms").select("id,name").eq("project_id", projectId).order("sort_order"),

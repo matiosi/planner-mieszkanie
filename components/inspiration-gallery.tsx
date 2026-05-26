@@ -11,6 +11,7 @@ import { Image as ImageIcon, Link as LinkIcon, Star, X, ChevronLeft, ChevronRigh
 interface Inspiration {
   id: string;
   title: string;
+  description: string | null;
   source: string;
   category: string | null;
   external_url: string | null;
@@ -33,20 +34,28 @@ interface Props {
 
 export function InspirationGallery({ projectId, inspirations, roomList }: Props) {
   const [lightboxId, setLightboxId] = useState<string | null>(null);
+  const [filterRoom, setFilterRoom] = useState<string | null>(null);
 
-  const activeIndex = inspirations.findIndex((i) => i.id === lightboxId);
-  const active = activeIndex >= 0 ? inspirations[activeIndex] : null;
+  // Pokoje które mają co najmniej jedną inspirację
+  const usedRooms = roomList.filter((r) => inspirations.some((i) => i.room_id === r.id));
+
+  const filtered = filterRoom
+    ? inspirations.filter((i) => i.room_id === filterRoom)
+    : inspirations;
+
+  const activeIndex = filtered.findIndex((i) => i.id === lightboxId);
+  const active = activeIndex >= 0 ? filtered[activeIndex] : null;
 
   const openLightbox = (id: string) => setLightboxId(id);
   const closeLightbox = () => setLightboxId(null);
 
   const prev = useCallback(() => {
-    if (activeIndex > 0) setLightboxId(inspirations[activeIndex - 1].id);
-  }, [activeIndex, inspirations]);
+    if (activeIndex > 0) setLightboxId(filtered[activeIndex - 1].id);
+  }, [activeIndex, filtered]);
 
   const next = useCallback(() => {
-    if (activeIndex < inspirations.length - 1) setLightboxId(inspirations[activeIndex + 1].id);
-  }, [activeIndex, inspirations]);
+    if (activeIndex < filtered.length - 1) setLightboxId(filtered[activeIndex + 1].id);
+  }, [activeIndex, filtered]);
 
   useEffect(() => {
     if (!lightboxId) return;
@@ -73,9 +82,41 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
 
   return (
     <>
+      {/* Filtry pokoi */}
+      {usedRooms.length > 0 && (
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterRoom(null)}
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors border ${
+              filterRoom === null
+                ? "bg-primary text-primary-foreground border-primary"
+                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+            }`}
+          >
+            Wszystkie ({inspirations.length})
+          </button>
+          {usedRooms.map((room) => {
+            const count = inspirations.filter((i) => i.room_id === room.id).length;
+            return (
+              <button
+                key={room.id}
+                onClick={() => setFilterRoom(filterRoom === room.id ? null : room.id)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors border ${
+                  filterRoom === room.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                }`}
+              >
+                {room.name} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Grid */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {inspirations.map((insp) => {
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filtered.map((insp) => {
           const roomName = roomList.find((r) => r.id === insp.room_id)?.name;
           return (
             <div key={insp.id} className="rounded-lg border border-border bg-card overflow-hidden">
@@ -112,12 +153,14 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
 
               {/* Info */}
               <div className="p-3 space-y-2">
-                <p className="text-sm font-medium leading-snug">{insp.title}</p>
                 <div className="flex flex-wrap gap-1">
                   <Badge variant="gray">{labelFor(labels.inspirationSource, insp.source)}</Badge>
                   {roomName && <Badge variant="gray">{roomName}</Badge>}
                   {insp.category && <Badge variant="gray">{insp.category}</Badge>}
                 </div>
+                {insp.description && (
+                  <p className="text-xs text-foreground leading-relaxed">{insp.description}</p>
+                )}
                 {insp.designer_note && (
                   <p className="text-xs text-muted-foreground italic">&quot;{insp.designer_note}&quot;</p>
                 )}
@@ -158,7 +201,7 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
           onClick={closeLightbox}
         >
           {/* Prev */}
-          {activeIndex > 0 && (
+          {activeIndex > 0 && filtered.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); prev(); }}
               className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
@@ -169,7 +212,7 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
           )}
 
           {/* Next */}
-          {activeIndex < inspirations.length - 1 && (
+          {activeIndex < filtered.length - 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); next(); }}
               className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
@@ -206,7 +249,9 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
             )}
 
             <div className="text-center text-white space-y-1 max-w-lg">
-              <p className="font-semibold text-lg">{active.title}</p>
+              {active.description && (
+                <p className="text-sm text-white/90 leading-relaxed">{active.description}</p>
+              )}
               {active.designer_note && (
                 <p className="text-sm text-white/70 italic">&quot;{active.designer_note}&quot;</p>
               )}
@@ -226,7 +271,7 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
                   </a>
                 )}
                 <span className="text-xs text-white/30">
-                  {activeIndex + 1} / {inspirations.length}
+                  {activeIndex + 1} / {filtered.length}
                 </span>
               </div>
             </div>

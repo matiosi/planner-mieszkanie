@@ -8,6 +8,7 @@ import {
   Truck, Lightbulb, Users, Image, Map, FileText, Shield, Ruler,
   Calculator, Camera, ClipboardCheck, Calendar, CreditCard, TrendingUp,
   MessageSquare, Download, PaintBucket, AlertOctagon, Users2, CheckSquare,
+  Clock, BarChart2,
 } from "lucide-react";
 
 const navGroups = [
@@ -69,6 +70,8 @@ const navGroups = [
     items: [
       { label: "Pytania", href: "questions", icon: MessageSquare },
       { label: "Członkowie", href: "members", icon: Users2 },
+      { label: "Historia", href: "activity", icon: Clock },
+      { label: "Raporty", href: "reports", icon: BarChart2 },
       { label: "Eksport", href: "export", icon: Download },
     ],
   },
