@@ -47,8 +47,8 @@ export function ScheduleGantt({ items, roomList }: Props) {
   // Tylko etapy z datami
   const dated = items.filter((i) => i.start_date && i.end_date);
 
-  const { minDate, maxDate, totalDays, months } = useMemo(() => {
-    if (!dated.length) return { minDate: new Date(), maxDate: new Date(), totalDays: 1, months: [] };
+  const { minDate, totalDays, months } = useMemo(() => {
+    if (!dated.length) return { minDate: new Date(), totalDays: 1, months: [] };
 
     const starts = dated.map((i) => parseDate(i.start_date!));
     const ends = dated.map((i) => parseDate(i.end_date!));
@@ -75,7 +75,7 @@ export function ScheduleGantt({ items, roomList }: Props) {
       cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
     }
 
-    return { minDate: min, maxDate: max, totalDays: total, months: monthHeaders };
+    return { minDate: min, totalDays: total, months: monthHeaders };
   }, [dated]);
 
   const noDateItems = items.filter((i) => !i.start_date || !i.end_date);

@@ -2,12 +2,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireProject, signedUrl } from "@/lib/data";
 import { updateDesignerNote } from "@/app/actions/inspirations";
 import { Textarea } from "@/components/ui/textarea";
-import { Star, Download, FileText } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 
 export default async function DesignerBriefPage({
   params,
@@ -15,7 +14,7 @@ export default async function DesignerBriefPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const { supabase, project } = await requireProject(projectId);
+  const { supabase } = await requireProject(projectId);
 
   const [{ data: rooms }, { data: inspirations }, { data: briefNotes }] = await Promise.all([
     supabase.from("rooms").select("id,name,area,concept_description").eq("project_id", projectId).order("sort_order"),

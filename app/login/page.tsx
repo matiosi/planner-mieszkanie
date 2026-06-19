@@ -6,7 +6,7 @@ import { GoogleLoginButton } from "@/components/google-login-button";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -14,6 +14,7 @@ export default async function LoginPage({
 
   const params = await searchParams;
   const oauthError = params.error === "oauth" ? "Błąd logowania. Spróbuj ponownie." : null;
+  const next = params.next?.startsWith("/") && !params.next.startsWith("//") ? params.next : undefined;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -35,7 +36,7 @@ export default async function LoginPage({
         )}
 
         <div className="mt-8">
-          <GoogleLoginButton />
+          <GoogleLoginButton next={next} />
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">

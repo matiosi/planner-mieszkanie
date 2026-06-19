@@ -113,7 +113,6 @@ export default async function DocumentsPage({
             {withUrls.map((doc) => {
               const roomName = roomList.find((r) => r.id === doc.room_id)?.name;
               const vendorName = vendorList.find((v) => v.id === doc.vendor_id)?.name;
-              const isImage = doc.mime_type?.startsWith("image/");
               return (
                 <div key={doc.id} className="flex items-start gap-3 rounded-md border border-border p-3">
                   <div className="shrink-0 rounded-md bg-muted p-2">

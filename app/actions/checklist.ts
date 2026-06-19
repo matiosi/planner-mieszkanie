@@ -47,7 +47,7 @@ export async function createFromTemplate(projectId: string, formData: FormData) 
 export async function deleteChecklist(projectId: string, formData: FormData) {
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
-  const { error } = await supabase.from("checklists").delete().eq("id", id);
+  const { error } = await supabase.from("checklists").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(path(projectId));
 }
@@ -56,7 +56,7 @@ export async function toggleChecklistItem(projectId: string, formData: FormData)
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
   const done = formData.get("done") === "true";
-  const { error } = await supabase.from("checklist_items").update({ done }).eq("id", id);
+  const { error } = await supabase.from("checklist_items").update({ done }).eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(path(projectId));
 }
@@ -79,7 +79,7 @@ export async function addChecklistItem(projectId: string, formData: FormData) {
 export async function deleteChecklistItem(projectId: string, formData: FormData) {
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
-  const { error } = await supabase.from("checklist_items").delete().eq("id", id);
+  const { error } = await supabase.from("checklist_items").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(path(projectId));
 }

@@ -11,6 +11,7 @@ export async function upsertBudgetItem(projectId: string, formData: FormData) {
   const payload = {
     project_id: projectId,
     room_id: getString(formData, "room_id") || null,
+    scenario_id: getString(formData, "scenario_id") || null,
     name: getString(formData, "name"),
     category: getString(formData, "category", "OTHER"),
     planned_cost: getNumber(formData, "planned_cost"),

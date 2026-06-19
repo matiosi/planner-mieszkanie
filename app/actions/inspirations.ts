@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireProject, getString, getBool } from "@/lib/data";
+import { IMAGE_UPLOAD_POLICY, assertUpload, extensionForMime, safeFetchExternalResource, safeStoragePath } from "@/lib/security";
 
 // ─── Import z URL (Pinterest, Houzz, inne) ────────────────────────────────────
 
@@ -39,16 +40,15 @@ export async function importInspirationFromUrl(
       imageUrl = url;
     } else {
       // Pobierz stronę i wyciągnij og:image
-      const pageRes = await fetch(url, {
+      const page = await safeFetchExternalResource(url, {
+        accept: ["text/html", "application/xhtml+xml"],
+        maxBytes: 2 * 1024 * 1024,
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+          "User-Agent": "Mozilla/5.0 (compatible; PlannerMieszkanie/1.0)",
           "Accept": "text/html,application/xhtml+xml",
         },
-        signal: AbortSignal.timeout(12000),
       });
-
-      if (!pageRes.ok) return { error: `Nie udało się pobrać strony (${pageRes.status}).` };
-      const html = await pageRes.text();
+      const html = new TextDecoder().decode(page.buffer);
 
       const ogImage = extractMeta(html, "og:image");
       if (!ogImage) return { error: "Nie znaleziono obrazka na tej stronie. Spróbuj wkleić bezpośredni link do zdjęcia." };
@@ -57,28 +57,17 @@ export async function importInspirationFromUrl(
     }
 
     // Pobierz obrazek
-    const imgRes = await fetch(imageUrl, {
+    const image = await safeFetchExternalResource(imageUrl, {
+      accept: IMAGE_UPLOAD_POLICY.allowedTypes,
+      maxBytes: IMAGE_UPLOAD_POLICY.maxBytes,
       headers: { "Referer": url, "User-Agent": "Mozilla/5.0" },
-      signal: AbortSignal.timeout(15000),
+      timeoutMs: 15000,
     });
-
-    if (!imgRes.ok) return { error: "Nie udało się pobrać obrazka (może wymaga logowania?)." };
-
-    const rawType = imgRes.headers.get("content-type") ?? "image/jpeg";
-    const contentType = rawType.split(";")[0].trim();
-    if (!["image/jpeg", "image/png", "image/webp"].includes(contentType)) {
-      return { error: "Nieobsługiwany format obrazka (dozwolone: JPEG, PNG, WebP)." };
-    }
-
-    const buffer = await imgRes.arrayBuffer();
-    if (buffer.byteLength > 10 * 1024 * 1024) return { error: "Obrazek jest za duży (maks. 10 MB)." };
-
-    const ext = contentType.includes("png") ? "png" : contentType.includes("webp") ? "webp" : "jpg";
-    const storagePath = `users/${user.id}/projects/${projectId}/inspirations/${crypto.randomUUID()}.${ext}`;
+    const storagePath = `users/${user.id}/projects/${projectId}/inspirations/${crypto.randomUUID()}.${extensionForMime(image.contentType)}`;
 
     const { error: uploadError } = await supabase.storage
       .from("inspirations")
-      .upload(storagePath, buffer, { contentType, upsert: false });
+      .upload(storagePath, image.buffer, { contentType: image.contentType, upsert: false });
 
     if (uploadError) return { error: `Błąd uploadu: ${uploadError.message}` };
 
@@ -112,12 +101,8 @@ export async function importInspirationFromUrl(
 const basePath = (pid: string) => `/projects/${pid}/inspirations`;
 const briefPath = (pid: string) => `/projects/${pid}/inspirations/designer-brief`;
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 10 * 1024 * 1024;
-
 function assertImageFile(file: File) {
-  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) throw new Error("Dozwolone formaty: JPEG, PNG, WebP.");
-  if (file.size > MAX_SIZE) throw new Error("Plik może mieć maksymalnie 10 MB.");
+  assertUpload(file, IMAGE_UPLOAD_POLICY);
 }
 
 export async function upsertInspiration(projectId: string, formData: FormData) {
@@ -129,8 +114,7 @@ export async function upsertInspiration(projectId: string, formData: FormData) {
   if (file && file.size > 0) {
     assertImageFile(file);
     source = "UPLOAD";
-    const ext = file.name.split(".").pop() ?? "jpg";
-    storagePath = `users/${user.id}/projects/${projectId}/inspirations/${crypto.randomUUID()}.${ext}`;
+    storagePath = safeStoragePath(user.id, projectId, "inspirations", file.type);
     const { error: uploadError } = await supabase.storage
       .from("inspirations")
       .upload(storagePath, file, { contentType: file.type, upsert: false });

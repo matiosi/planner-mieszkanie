@@ -18,7 +18,7 @@ export async function upsertVendorMeeting(projectId: string, formData: FormData)
   };
 
   if (id) {
-    const { error } = await supabase.from("vendor_meetings").update(payload).eq("id", id);
+    const { error } = await supabase.from("vendor_meetings").update(payload).eq("id", id).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from("vendor_meetings").insert(payload);
@@ -31,7 +31,7 @@ export async function upsertVendorMeeting(projectId: string, formData: FormData)
 export async function deleteVendorMeeting(projectId: string, formData: FormData) {
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
-  const { error } = await supabase.from("vendor_meetings").delete().eq("id", id);
+  const { error } = await supabase.from("vendor_meetings").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/vendors`);
 }

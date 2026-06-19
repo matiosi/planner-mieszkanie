@@ -55,7 +55,7 @@ export async function updateProject(projectId: string, formData: FormData) {
   revalidatePath(projectPath(projectId));
 }
 
-export async function deleteProject(projectId: string, _formData?: FormData) {
+export async function deleteProject(projectId: string) {
   const { supabase, user } = await requireProject(projectId);
   const uid = user.id;
   const pid = projectId;

@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
 import { CopyButton } from "@/components/copy-button";
-import { requireProject } from "@/lib/data";
+import { requireProjectOwner } from "@/lib/data";
 import { getPublicSiteUrl } from "@/lib/env";
 import { inviteMember, removeMember, revokeInvitation } from "@/app/actions/members";
 import { Users2, Clock } from "lucide-react";
@@ -34,7 +33,7 @@ export default async function MembersPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const { supabase, project } = await requireProject(projectId);
+  const { supabase, project } = await requireProjectOwner(projectId);
 
   const [{ data: members }, { data: invitations }] = await Promise.all([
     supabase

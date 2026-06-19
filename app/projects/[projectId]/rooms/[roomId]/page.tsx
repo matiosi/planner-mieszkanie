@@ -10,10 +10,10 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
-import { formatArea, formatCurrency } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertRoom, deleteRoom } from "@/app/actions/rooms";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Ruler } from "lucide-react";
 
 export default async function RoomDetailPage({
   params,
@@ -23,7 +23,7 @@ export default async function RoomDetailPage({
   const { projectId, roomId } = await params;
   const { supabase } = await requireProject(projectId);
 
-  const [{ data: room }, { data: tasks }, { data: decisions }, { data: products }, { data: budget }] =
+  const [{ data: room }, { data: tasks }, { data: decisions }, { data: products }, { data: budget }, { data: technical }] =
     await Promise.all([
       supabase
         .from("rooms")
@@ -35,6 +35,7 @@ export default async function RoomDetailPage({
       supabase.from("decisions").select("id,title,status").eq("project_id", projectId).eq("room_id", roomId),
       supabase.from("products").select("id,name,status,price").eq("project_id", projectId).eq("room_id", roomId),
       supabase.from("budget_items").select("id,name,planned_cost,actual_cost").eq("project_id", projectId).eq("room_id", roomId),
+      supabase.from("room_technical_details").select("ceiling_height,flooring_area,wall_area,skirting_length,number_of_light_points,number_of_sockets").eq("project_id", projectId).eq("room_id", roomId).maybeSingle(),
     ]);
 
   if (!room) notFound();
@@ -81,6 +82,22 @@ export default async function RoomDetailPage({
                 <p className="text-xs text-muted-foreground">Rzeczywisty</p>
                 <p className="text-lg font-semibold">{formatCurrency(actualCost)}</p>
               </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">Karta techniczna</h2>
+                <p className="text-sm text-muted-foreground">
+                  Podłoga {technical?.flooring_area ?? "—"} m² · Ściany {technical?.wall_area ?? "—"} m² · Listwy {technical?.skirting_length ?? "—"} mb
+                </p>
+              </div>
+              <Button asChild variant="secondary" size="sm">
+                <Link href={`/projects/${projectId}/rooms/${roomId}/technical`}>
+                  <Ruler className="h-4 w-4" /> Edytuj
+                </Link>
+              </Button>
             </div>
           </Card>
 

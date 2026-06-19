@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const COMMENT_ENTITY_TYPES = new Set(["project", "task", "decision", "product", "plan", "punch_list_item", "room", "vendor"]);
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ projectId: string }> }
@@ -9,6 +11,9 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const entityType = searchParams.get("entityType") ?? "";
   const entityId = searchParams.get("entityId") ?? "";
+  if (!COMMENT_ENTITY_TYPES.has(entityType) || !entityId) {
+    return NextResponse.json([], { status: 400 });
+  }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

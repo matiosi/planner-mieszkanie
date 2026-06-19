@@ -4,8 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { requireProject } from "@/lib/data";
 import { computeNextActions } from "@/lib/next-actions";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-import { labelFor, labels, statusVariant } from "@/lib/labels";
-import { CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, Info } from "lucide-react";
 import Link from "next/link";
 
 function ProgressBar({ value, max, color = "bg-primary" }: { value: number; max: number; color?: string }) {
@@ -46,7 +45,6 @@ export default async function ReportsPage({
   // Zadania
   const taskList = tasks ?? [];
   const taskDone = taskList.filter((t) => t.status === "DONE").length;
-  const taskOpen = taskList.filter((t) => t.status !== "DONE").length;
   const taskBlocked = taskList.filter((t) => t.status === "BLOCKED").length;
 
   // Budżet

@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireProject, getString } from "@/lib/data";
+import { requireProjectOwner, getString } from "@/lib/data";
 
 const memberPath = (projectId: string) => `/projects/${projectId}/members`;
 
 export async function inviteMember(projectId: string, formData: FormData) {
-  const { supabase, user } = await requireProject(projectId);
+  const { supabase, user } = await requireProjectOwner(projectId);
   const email = getString(formData, "email")?.trim().toLowerCase();
   const role = getString(formData, "role", "EDITOR") as string;
 
@@ -39,7 +39,7 @@ export async function inviteMember(projectId: string, formData: FormData) {
 }
 
 export async function removeMember(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase } = await requireProjectOwner(projectId);
   const memberId = formData.get("id") as string;
   const { error } = await supabase.from("project_members").delete().eq("id", memberId);
   if (error) throw new Error(error.message);
@@ -47,7 +47,7 @@ export async function removeMember(projectId: string, formData: FormData) {
 }
 
 export async function updateMemberRole(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase } = await requireProjectOwner(projectId);
   const memberId = formData.get("id") as string;
   const role = getString(formData, "role", "VIEWER");
   const { error } = await supabase.from("project_members").update({ role }).eq("id", memberId);
@@ -56,7 +56,7 @@ export async function updateMemberRole(projectId: string, formData: FormData) {
 }
 
 export async function revokeInvitation(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase } = await requireProjectOwner(projectId);
   const invitationId = formData.get("id") as string;
   const { error } = await supabase.from("pending_invitations").delete().eq("id", invitationId);
   if (error) throw new Error(error.message);

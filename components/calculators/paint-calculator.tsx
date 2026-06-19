@@ -5,8 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Paintbrush } from "lucide-react";
 
-export function PaintCalculator({ projectId }: { projectId: string }) {
+export function PaintCalculator(_props: { projectId: string }) {
+  void _props;
   const [wallArea, setWallArea] = useState("");
   const [coats, setCoats] = useState("2");
   const [coverage, setCoverage] = useState("10");
@@ -29,7 +31,7 @@ export function PaintCalculator({ projectId }: { projectId: string }) {
 
   return (
     <Card>
-      <h2 className="font-semibold mb-4">🎨 Farba</h2>
+      <h2 className="font-semibold mb-4 flex items-center gap-2"><Paintbrush className="h-4 w-4" /> Farba</h2>
       <div className="space-y-3">
         <Field label="Powierzchnia ścian (m²)">
           <Input

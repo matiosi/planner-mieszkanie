@@ -19,7 +19,7 @@ export async function upsertAlternative(projectId: string, formData: FormData) {
   };
 
   if (id) {
-    const { error } = await supabase.from("alternatives").update(payload).eq("id", id);
+    const { error } = await supabase.from("alternatives").update(payload).eq("id", id).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from("alternatives").insert(payload);
@@ -31,7 +31,7 @@ export async function upsertAlternative(projectId: string, formData: FormData) {
 export async function deleteAlternative(projectId: string, formData: FormData) {
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
-  const { error } = await supabase.from("alternatives").delete().eq("id", id);
+  const { error } = await supabase.from("alternatives").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/decisions`);
 }
@@ -42,13 +42,13 @@ export async function selectAlternative(projectId: string, formData: FormData) {
   const decisionId = formData.get("decision_id") as string;
 
   // Odznacz wszystkie inne
-  await supabase.from("alternatives").update({ selected: false }).eq("decision_id", decisionId);
+  await supabase.from("alternatives").update({ selected: false }).eq("decision_id", decisionId).eq("project_id", projectId);
   // Zaznacz wybraną
-  await supabase.from("alternatives").update({ selected: true }).eq("id", alternativeId);
+  await supabase.from("alternatives").update({ selected: true }).eq("id", alternativeId).eq("project_id", projectId);
   // Zaktualizuj status decyzji
-  const { data: alt } = await supabase.from("alternatives").select("name").eq("id", alternativeId).single();
+  const { data: alt } = await supabase.from("alternatives").select("name").eq("id", alternativeId).eq("project_id", projectId).single();
   if (alt) {
-    await supabase.from("decisions").update({ status: "DECIDED", selected_option: alt.name }).eq("id", decisionId);
+    await supabase.from("decisions").update({ status: "DECIDED", selected_option: alt.name }).eq("id", decisionId).eq("project_id", projectId);
   }
 
   revalidatePath(`/projects/${projectId}/decisions`);

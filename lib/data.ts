@@ -1,6 +1,17 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+export const PROJECT_ROLES = ["OWNER", "EDITOR", "VIEWER", "DESIGNER", "CONTRACTOR"] as const;
+export type ProjectRole = (typeof PROJECT_ROLES)[number];
+
+const ROLE_RANK: Record<ProjectRole, number> = {
+  OWNER: 100,
+  EDITOR: 80,
+  DESIGNER: 60,
+  CONTRACTOR: 40,
+  VIEWER: 10,
+};
+
 export async function requireUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -8,20 +19,54 @@ export async function requireUser() {
   return { supabase, user };
 }
 
-export async function requireProject(projectId: string) {
+export async function requireProjectAccess(projectId: string) {
   const { supabase, user } = await requireUser();
   const { data: project, error } = await supabase
     .from("projects")
     .select("id,owner_id,name,area,target_budget,style,stage,description,contingency_percent,created_at")
     .eq("id", projectId)
-    .eq("owner_id", user.id)
     .single();
   if (error || !project) notFound();
-  return { supabase, user, project };
+
+  if (project.owner_id === user.id) {
+    return { supabase, user, project, role: "OWNER" as ProjectRole };
+  }
+
+  const { data: member } = await supabase
+    .from("project_members")
+    .select("role")
+    .eq("project_id", projectId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!member?.role) notFound();
+  return { supabase, user, project, role: member.role as ProjectRole };
+}
+
+export async function requireProjectRole(projectId: string, allowedRoles: ProjectRole[]) {
+  const ctx = await requireProjectAccess(projectId);
+  if (!allowedRoles.includes(ctx.role)) notFound();
+  return ctx;
+}
+
+export async function requireProjectWrite(projectId: string) {
+  return requireProjectRole(projectId, ["OWNER", "EDITOR"]);
+}
+
+export async function requireProjectOwner(projectId: string) {
+  return requireProjectRole(projectId, ["OWNER"]);
+}
+
+export async function requireProject(projectId: string) {
+  return requireProjectAccess(projectId);
+}
+
+export function canRoleAtLeast(role: ProjectRole, minimum: ProjectRole) {
+  return ROLE_RANK[role] >= ROLE_RANK[minimum];
 }
 
 export async function getRooms(projectId: string) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase } = await requireProjectAccess(projectId);
   const { data } = await supabase
     .from("rooms")
     .select("id,name,area,status,concept_description,notes,budget_planned,sort_order")
@@ -32,7 +77,7 @@ export async function getRooms(projectId: string) {
 }
 
 export async function getDashboard(projectId: string) {
-  const { supabase, project } = await requireProject(projectId);
+  const { supabase, project } = await requireProjectAccess(projectId);
   const [rooms, budget, tasks, decisions, products, vendors, inspirations, differences] = await Promise.all([
     supabase.from("rooms").select("id,name,status").eq("project_id", projectId).order("sort_order"),
     supabase.from("budget_items").select("planned_cost,actual_cost,unexpected_cost").eq("project_id", projectId),

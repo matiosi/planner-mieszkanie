@@ -15,6 +15,7 @@ export async function computeNextActions(
 ): Promise<NextAction[]> {
   const today = new Date().toISOString().split("T")[0];
   const in7days = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+  const in30days = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
 
   const [
     { data: payments },
@@ -26,6 +27,7 @@ export async function computeNextActions(
     { data: planDiffs },
     { data: rooms },
     { data: questions },
+    { data: warranties },
   ] = await Promise.all([
     supabase
       .from("payments")
@@ -48,7 +50,7 @@ export async function computeNextActions(
       .eq("project_id", projectId),
     supabase
       .from("punch_list_items")
-      .select("id,title,severity,status")
+      .select("id,title,severity,status,due_date")
       .eq("project_id", projectId)
       .not("status", "in", '("FIXED","ACCEPTED")'),
     supabase
@@ -70,6 +72,12 @@ export async function computeNextActions(
       .select("id,question,status,due_date")
       .eq("project_id", projectId)
       .in("status", ["OPEN", "NEEDS_FOLLOW_UP"]),
+    supabase
+      .from("documents")
+      .select("id,title,warranty_until")
+      .eq("project_id", projectId)
+      .gte("warranty_until", today)
+      .lte("warranty_until", in30days),
   ]);
 
   const actions: NextAction[] = [];
@@ -138,6 +146,19 @@ export async function computeNextActions(
       title: `${overdueTasks.length} zaległe zadanie${overdueTasks.length > 1 ? "a" : ""}`,
       description: `Termin minął: ${overdueTasks.slice(0, 2).map((t) => t.title).join(", ")}`,
       href: `/projects/${projectId}/tasks`,
+    });
+  }
+
+  // 5.5. Overdue punch list items
+  const overduePunchItems = (punchList ?? []).filter((p) => p.due_date && p.due_date < today);
+  if (overduePunchItems.length > 0) {
+    actions.push({
+      priority: 5.5,
+      category: "Odbiór",
+      urgency: "high",
+      title: `${overduePunchItems.length} usterka${overduePunchItems.length > 1 ? "i" : ""} po terminie`,
+      description: overduePunchItems.slice(0, 2).map((p) => p.title).join(", "),
+      href: `/projects/${projectId}/punch-list`,
     });
   }
 
@@ -219,6 +240,18 @@ export async function computeNextActions(
       title: `${products!.length} opóźniona dostawa${products!.length > 1 ? "y" : ""}`,
       description: products!.slice(0, 2).map((p) => p.name).join(", "),
       href: `/projects/${projectId}/deliveries`,
+    });
+  }
+
+  // 11.5. Warranties expiring in 30 days
+  if ((warranties ?? []).length > 0) {
+    actions.push({
+      priority: 11.5,
+      category: "Gwarancje",
+      urgency: "medium",
+      title: `${warranties!.length} gwarancja wygasa w 30 dni`,
+      description: warranties!.slice(0, 2).map((d) => d.title).join(", "),
+      href: `/projects/${projectId}/documents`,
     });
   }
 

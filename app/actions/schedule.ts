@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser, getString, getNumber } from "@/lib/data";
+import { requireUser, getString } from "@/lib/data";
 
 export async function upsertScheduleItem(projectId: string, formData: FormData) {
   const supabase = await createClient();
@@ -33,7 +33,7 @@ export async function upsertScheduleItem(projectId: string, formData: FormData) 
   };
 
   if (id) {
-    const { error } = await supabase.from("schedule_items").update(payload).eq("id", id);
+    const { error } = await supabase.from("schedule_items").update(payload).eq("id", id).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from("schedule_items").insert(payload);
@@ -50,7 +50,7 @@ export async function deleteScheduleItem(projectId: string, formData: FormData) 
   const id = getString(formData, "id");
   if (!id) throw new Error("ID jest wymagane");
 
-  const { error } = await supabase.from("schedule_items").delete().eq("id", id);
+  const { error } = await supabase.from("schedule_items").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/schedule`);
 }

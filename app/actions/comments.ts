@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireProject, getString } from "@/lib/data";
 
+const COMMENT_ENTITY_TYPES = new Set(["project", "task", "decision", "product", "plan", "punch_list_item", "room", "vendor"]);
+
 export async function createComment(projectId: string, formData: FormData) {
   const { supabase, user } = await requireProject(projectId);
   const body = getString(formData, "body")?.trim();
@@ -10,6 +12,8 @@ export async function createComment(projectId: string, formData: FormData) {
   const entityId = getString(formData, "entity_id") ?? "";
 
   if (!body) return;
+  if (!COMMENT_ENTITY_TYPES.has(entityType)) throw new Error("Nieprawidłowy typ komentarza.");
+  if (!entityId) throw new Error("Brak powiązanej encji.");
 
   const { error } = await supabase.from("comments").insert({
     project_id: projectId,

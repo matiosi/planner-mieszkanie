@@ -34,7 +34,7 @@ export async function upsertPayment(projectId: string, formData: FormData) {
   };
 
   if (id) {
-    const { error } = await supabase.from("payments").update(payload).eq("id", id);
+    const { error } = await supabase.from("payments").update(payload).eq("id", id).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from("payments").insert(payload);
@@ -51,7 +51,7 @@ export async function deletePayment(projectId: string, formData: FormData) {
   const id = getString(formData, "id");
   if (!id) throw new Error("ID jest wymagane");
 
-  const { error } = await supabase.from("payments").delete().eq("id", id);
+  const { error } = await supabase.from("payments").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/payments`);
 }

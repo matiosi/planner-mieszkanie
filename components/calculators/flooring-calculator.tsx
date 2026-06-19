@@ -5,8 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PanelsTopLeft } from "lucide-react";
 
-export function FlooringCalculator({ projectId }: { projectId: string }) {
+export function FlooringCalculator(_props: { projectId: string }) {
+  void _props;
   const [area, setArea] = useState("");
   const [waste, setWaste] = useState("10");
   const [result, setResult] = useState<{ total: number; packs?: number; packSize?: number } | null>(null);
@@ -27,7 +29,7 @@ export function FlooringCalculator({ projectId }: { projectId: string }) {
 
   return (
     <Card>
-      <h2 className="font-semibold mb-4">🪵 Podłoga / Panele</h2>
+      <h2 className="font-semibold mb-4 flex items-center gap-2"><PanelsTopLeft className="h-4 w-4" /> Podłoga / Panele</h2>
       <div className="space-y-3">
         <Field label="Powierzchnia pomieszczenia (m²)">
           <Input

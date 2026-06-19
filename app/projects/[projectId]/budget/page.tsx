@@ -6,7 +6,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
@@ -23,18 +22,20 @@ export default async function BudgetPage({
   const { projectId } = await params;
   const { supabase, project } = await requireProject(projectId);
 
-  const [{ data: items }, { data: rooms }] = await Promise.all([
+  const [{ data: items }, { data: rooms }, { data: scenarios }] = await Promise.all([
     supabase
       .from("budget_items")
-      .select("id,name,category,planned_cost,actual_cost,status,unexpected_cost,room_id,notes")
+      .select("id,name,category,planned_cost,actual_cost,status,unexpected_cost,room_id,scenario_id,notes")
       .eq("project_id", projectId)
       .order("category")
       .order("name"),
     supabase.from("rooms").select("id,name").eq("project_id", projectId).order("sort_order"),
+    supabase.from("budget_scenarios").select("id,name,is_active").eq("project_id", projectId).order("created_at"),
   ]);
 
   const list = items ?? [];
   const roomList = rooms ?? [];
+  const scenarioList = scenarios ?? [];
   const totalPlanned = list.reduce((s, i) => s + Number(i.planned_cost ?? 0), 0);
   const totalActual = list.reduce((s, i) => s + Number(i.actual_cost ?? 0), 0);
   const target = Number(project.target_budget ?? 0);
@@ -117,6 +118,16 @@ export default async function BudgetPage({
             <Select name="status" defaultValue="PLANNED">
               {Object.entries(labels.budgetStatus).map(([v, l]) => (
                 <option key={v} value={v}>{l}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Scenariusz">
+            <Select name="scenario_id" defaultValue="">
+              <option value="">Budżet główny</option>
+              {scenarioList.map((scenario) => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.name}{scenario.is_active ? " (aktywny)" : ""}
+                </option>
               ))}
             </Select>
           </Field>

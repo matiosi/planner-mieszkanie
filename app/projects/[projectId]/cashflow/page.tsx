@@ -34,7 +34,6 @@ export default async function CashflowPage({
     .filter((p) => p.status === "PAID")
     .reduce((s, p) => s + (p.amount ?? 0), 0);
   const totalPlannedPayments = paymentList.reduce((s, p) => s + (p.amount ?? 0), 0);
-  const totalBudget = budgetList.reduce((s, b) => s + (b.planned_cost ?? 0), 0);
   const totalActual = budgetList.reduce((s, b) => s + (b.actual_cost ?? 0), 0);
 
   // Aggregate by month for chart

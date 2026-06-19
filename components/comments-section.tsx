@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useCallback, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { createComment, deleteComment } from "@/app/actions/comments";
@@ -27,11 +27,7 @@ export function CommentsSection({ projectId, entityType, entityId, currentUserId
   const [body, setBody] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    fetchComments();
-  }, [entityId]);
-
-  async function fetchComments() {
+  const fetchComments = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(
@@ -44,7 +40,11 @@ export function CommentsSection({ projectId, entityType, entityId, currentUserId
     } finally {
       setLoading(false);
     }
-  }
+  }, [entityId, entityType, projectId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

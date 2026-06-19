@@ -7,7 +7,6 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/delete-button";
-import { labelFor, labels } from "@/lib/labels";
 import { formatDate } from "@/lib/formatters";
 import { requireProject, signedUrl } from "@/lib/data";
 import { uploadPlan, deletePlan } from "@/app/actions/plans";

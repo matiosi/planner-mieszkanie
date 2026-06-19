@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { requireProject } from "@/lib/data";
-import { FileDown, FileSpreadsheet, Image, Package } from "lucide-react";
+import { FileDown, FileSpreadsheet, Package } from "lucide-react";
 
 export default async function ExportPage({
   params,

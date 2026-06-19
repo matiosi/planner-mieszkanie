@@ -1,0 +1,12 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e6]
+      - heading "Planner Mieszkanie" [level=1] [ref=e10]
+      - paragraph [ref=e11]: Zaloguj się, aby zarządzać swoim projektem wykończenia.
+    - button "Zaloguj się przez Google" [ref=e13] [cursor=pointer]:
+      - img [ref=e14]
+      - text: Zaloguj się przez Google
+    - paragraph [ref=e19]: Logując się, akceptujesz politykę prywatności i warunki korzystania z serwisu.
+  - region "Notifications alt+T"
+  - alert [ref=e20]

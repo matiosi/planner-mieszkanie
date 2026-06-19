@@ -11,7 +11,7 @@ import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatCurrency } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
-import { upsertDecision, deleteDecision } from "@/app/actions/decisions";
+import { upsertDecision, deleteDecision, updateDecisionApproval } from "@/app/actions/decisions";
 import { upsertAlternative, deleteAlternative, selectAlternative } from "@/app/actions/alternatives";
 import { Plus, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 
@@ -23,7 +23,7 @@ export default async function DecisionsPage({
   const { projectId } = await params;
   const { supabase } = await requireProject(projectId);
 
-  const [{ data: decisions }, { data: rooms }, { data: alternatives }] = await Promise.all([
+  const [{ data: decisions }, { data: rooms }, { data: alternatives }, { data: approvals }] = await Promise.all([
     supabase
       .from("decisions")
       .select("id,title,description,status,selected_option,notes,room_id,requires_approval")
@@ -36,11 +36,16 @@ export default async function DecisionsPage({
       .select("id,decision_id,name,url,price,pros,cons,selected")
       .eq("project_id", projectId)
       .order("created_at"),
+    supabase
+      .from("decision_approvals")
+      .select("decision_id,status,notes")
+      .eq("project_id", projectId),
   ]);
 
   const list = decisions ?? [];
   const roomList = rooms ?? [];
   const altList = alternatives ?? [];
+  const approvalList = approvals ?? [];
 
   const byStatus: Record<string, typeof list> = {
     NOT_STARTED: list.filter((d) => d.status === "NOT_STARTED"),
@@ -112,6 +117,7 @@ export default async function DecisionsPage({
                 {byStatus[status].map((d) => {
                   const roomName = roomList.find((r) => r.id === d.room_id)?.name;
                   const decisionAlts = altList.filter((a) => a.decision_id === d.id);
+                  const approval = approvalList.find((item) => item.decision_id === d.id);
                   return (
                     <Card key={d.id} className="p-3 flex flex-col gap-2">
                       <p className="text-sm font-medium">{d.title}</p>
@@ -122,7 +128,26 @@ export default async function DecisionsPage({
                         </p>
                       )}
                       {d.requires_approval && (
-                        <Badge variant="amber" className="w-fit">Wymaga zatwierdzenia</Badge>
+                        <div className="rounded-md border border-amber-200 bg-amber-50 p-2">
+                          <Badge variant={statusVariant(approval?.status ?? "PENDING")} className="w-fit">
+                            {labelFor(labels.approvalStatus, approval?.status ?? "PENDING")}
+                          </Badge>
+                          {approval?.notes && <p className="mt-1 text-xs text-amber-900">{approval.notes}</p>}
+                          {(approval?.status ?? "PENDING") === "PENDING" && (
+                            <div className="mt-2 flex gap-1">
+                              <form action={updateDecisionApproval.bind(null, projectId)}>
+                                <input type="hidden" name="decision_id" value={d.id} />
+                                <input type="hidden" name="status" value="APPROVED" />
+                                <Button type="submit" variant="secondary" size="sm" className="h-7 text-xs">Zatwierdź</Button>
+                              </form>
+                              <form action={updateDecisionApproval.bind(null, projectId)}>
+                                <input type="hidden" name="decision_id" value={d.id} />
+                                <input type="hidden" name="status" value="REJECTED" />
+                                <Button type="submit" variant="ghost" size="sm" className="h-7 text-xs">Odrzuć</Button>
+                              </form>
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {/* Alternatywy */}

@@ -2,23 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { requireProject, getString } from "@/lib/data";
+import { PLAN_UPLOAD_POLICY, assertUpload, safeStoragePath } from "@/lib/security";
 
 const plansPath = (pid: string) => `/projects/${pid}/plans`;
 const comparePath = (pid: string) => `/projects/${pid}/plans/compare`;
-
-const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-const MAX_SIZE = 20 * 1024 * 1024;
 
 export async function uploadPlan(projectId: string, formData: FormData) {
   const { supabase, user } = await requireProject(projectId);
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) throw new Error("Wybierz plik planu.");
-  if (!ALLOWED.includes(file.type)) throw new Error("Dozwolone formaty: JPEG, PNG, WebP.");
-  if (file.size > MAX_SIZE) throw new Error("Plik może mieć maksymalnie 20 MB.");
+  assertUpload(file, PLAN_UPLOAD_POLICY);
 
   const planType = getString(formData, "plan_type", "ORIGINAL");
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const storagePath = `users/${user.id}/projects/${projectId}/plans/${planType.toLowerCase()}-${crypto.randomUUID()}.${ext}`;
+  const storagePath = safeStoragePath(user.id, projectId, `plans/${planType.toLowerCase()}`, file.type);
 
   const { error: uploadError } = await supabase.storage.from("plans").upload(storagePath, file, {
     contentType: file.type,

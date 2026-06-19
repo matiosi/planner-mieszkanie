@@ -13,7 +13,8 @@ import { formatCurrency, formatDate } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertVendor, deleteVendor } from "@/app/actions/vendors";
 import { upsertVendorMeeting, deleteVendorMeeting } from "@/app/actions/vendor-meetings";
-import { Plus, Phone, Mail, Calendar, ChevronDown } from "lucide-react";
+import { upsertVendorScopeItem, deleteVendorScopeItem } from "@/app/actions/vendor-scope";
+import { Plus, Phone, Mail, Calendar, ChevronDown, ClipboardList } from "lucide-react";
 
 export default async function VendorsPage({
   params,
@@ -23,7 +24,7 @@ export default async function VendorsPage({
   const { projectId } = await params;
   const { supabase } = await requireProject(projectId);
 
-  const [{ data: vendors }, { data: meetings }] = await Promise.all([
+  const [{ data: vendors }, { data: meetings }, { data: scopeItems }, { data: rooms }] = await Promise.all([
     supabase
       .from("vendors")
       .select("id,name,type,phone,email,offer_amount,status,notes")
@@ -35,10 +36,18 @@ export default async function VendorsPage({
       .select("id,vendor_id,title,meeting_date,notes,outcome,next_steps")
       .eq("project_id", projectId)
       .order("meeting_date", { ascending: false }),
+    supabase
+      .from("vendor_scope_items")
+      .select("id,vendor_id,room_id,title,description,included,price_included,price_note,notes")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    supabase.from("rooms").select("id,name").eq("project_id", projectId).order("sort_order"),
   ]);
 
   const list = vendors ?? [];
   const allMeetings = meetings ?? [];
+  const allScopeItems = scopeItems ?? [];
+  const roomList = rooms ?? [];
 
   return (
     <>
@@ -90,6 +99,7 @@ export default async function VendorsPage({
         <div className="mt-6 space-y-4">
           {list.map((v) => {
             const vendorMeetings = allMeetings.filter((m) => m.vendor_id === v.id);
+            const vendorScopeItems = allScopeItems.filter((item) => item.vendor_id === v.id);
             return (
               <Card key={v.id}>
                 {/* Dane wykonawcy */}
@@ -183,6 +193,73 @@ export default async function VendorsPage({
                       <div className="sm:col-span-2">
                         <Button type="submit" variant="secondary" size="sm">
                           <Plus className="h-3.5 w-3.5" /> Dodaj spotkanie
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+
+                <details className="mt-3 border-t border-border pt-3">
+                  <summary className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none list-none hover:text-foreground transition-colors">
+                    <ClipboardList className="h-3.5 w-3.5" />
+                    Zakres prac ({vendorScopeItems.length})
+                    <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+                  </summary>
+
+                  <div className="mt-3 space-y-2">
+                    {vendorScopeItems.map((item) => {
+                      const roomName = roomList.find((room) => room.id === item.room_id)?.name;
+                      return (
+                        <div key={item.id} className="rounded-md border border-border bg-muted/30 px-3 py-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium">{item.title}</p>
+                              {roomName && <p className="text-xs text-muted-foreground">{roomName}</p>}
+                              {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                <Badge variant={item.included ? "green" : "gray"}>{item.included ? "W zakresie" : "Poza zakresem"}</Badge>
+                                <Badge variant={item.price_included ? "green" : "amber"}>{item.price_included ? "W cenie" : "Poza ceną"}</Badge>
+                              </div>
+                            </div>
+                            <DeleteButton
+                              action={deleteVendorScopeItem.bind(null, projectId)}
+                              id={item.id}
+                              confirmMessage="Usunąć zakres prac?"
+                              size="sm"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    <form action={upsertVendorScopeItem.bind(null, projectId)} className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <input type="hidden" name="vendor_id" value={v.id} />
+                      <Field label="Zakres *">
+                        <Input name="title" required placeholder="np. Montaż oświetlenia w salonie" />
+                      </Field>
+                      <Field label="Pomieszczenie">
+                        <Select name="room_id" defaultValue="">
+                          <option value="">— brak —</option>
+                          {roomList.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
+                        </Select>
+                      </Field>
+                      <Field label="Opis" className="sm:col-span-2">
+                        <Textarea name="description" rows={2} placeholder="Szczegóły zakresu" />
+                      </Field>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="included" defaultChecked className="h-4 w-4 rounded border-border" />
+                        W zakresie prac
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="checkbox" name="price_included" defaultChecked className="h-4 w-4 rounded border-border" />
+                        Wliczone w cenę
+                      </label>
+                      <Field label="Uwagi do ceny" className="sm:col-span-2">
+                        <Input name="price_note" placeholder="np. materiał po stronie inwestora" />
+                      </Field>
+                      <div className="sm:col-span-2">
+                        <Button type="submit" variant="secondary" size="sm">
+                          <Plus className="h-3.5 w-3.5" /> Dodaj zakres
                         </Button>
                       </div>
                     </form>

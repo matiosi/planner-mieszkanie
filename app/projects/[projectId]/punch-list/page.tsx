@@ -12,14 +12,18 @@ import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatDate } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertPunchListItem, deletePunchListItem } from "@/app/actions/punch-list";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, Download } from "lucide-react";
+import Link from "next/link";
 
 export default async function PunchListPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ room?: string; vendor?: string; status?: string; severity?: string }>;
 }) {
   const { projectId } = await params;
+  const filters = await searchParams;
   const { supabase } = await requireProject(projectId);
 
   const [{ data: items }, { data: rooms }, { data: vendors }] = await Promise.all([
@@ -35,9 +39,16 @@ export default async function PunchListPage({
   const list = items ?? [];
   const roomList = rooms ?? [];
   const vendorList = vendors ?? [];
+  const filtered = list.filter((item) => {
+    if (filters.room && item.room_id !== filters.room) return false;
+    if (filters.vendor && item.vendor_id !== filters.vendor) return false;
+    if (filters.status && item.status !== filters.status) return false;
+    if (filters.severity && item.severity !== filters.severity) return false;
+    return true;
+  });
 
-  const open = list.filter((i) => !["FIXED", "ACCEPTED"].includes(i.status));
-  const closed = list.filter((i) => ["FIXED", "ACCEPTED"].includes(i.status));
+  const open = filtered.filter((i) => !["FIXED", "ACCEPTED"].includes(i.status));
+  const closed = filtered.filter((i) => ["FIXED", "ACCEPTED"].includes(i.status));
 
   async function addItem(formData: FormData) {
     "use server";
@@ -49,6 +60,13 @@ export default async function PunchListPage({
       <PageHeader
         title="Lista usterek"
         description={`${open.length} otwartych, ${closed.length} zamkniętych`}
+        actions={
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/api/projects/${projectId}/export/punch-list`}>
+              <Download className="h-4 w-4" /> Protokół PDF
+            </Link>
+          </Button>
+        }
       />
 
       {/* Add form */}
@@ -72,6 +90,13 @@ export default async function PunchListPage({
               ))}
             </Select>
           </Field>
+          <Field label="Faza odbioru">
+            <Select name="acceptance_phase" defaultValue="FINAL">
+              <option value="PRE">Przed odbiorem</option>
+              <option value="FINAL">Odbiór końcowy</option>
+              <option value="WARRANTY">Gwarancyjnie</option>
+            </Select>
+          </Field>
           <Field label="Pomieszczenie">
             <Select name="room_id" defaultValue="">
               <option value="">— brak —</option>
@@ -87,6 +112,9 @@ export default async function PunchListPage({
           <Field label="Termin naprawy">
             <Input name="due_date" type="date" />
           </Field>
+          <Field label="Zdjęcie usterki">
+            <Input name="photo" type="file" accept="image/jpeg,image/png,image/webp" />
+          </Field>
           <Field label="Opis" className="sm:col-span-2 lg:col-span-3">
             <Textarea name="description" rows={2} placeholder="Szczegóły usterki…" />
           </Field>
@@ -94,6 +122,38 @@ export default async function PunchListPage({
             <Button type="submit" size="sm">
               <Plus className="h-4 w-4" /> Zgłoś usterkę
             </Button>
+          </div>
+        </form>
+      </Card>
+
+      <Card className="mt-4">
+        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Field label="Pomieszczenie">
+            <Select name="room" defaultValue={filters.room ?? ""}>
+              <option value="">Wszystkie</option>
+              {roomList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Wykonawca">
+            <Select name="vendor" defaultValue={filters.vendor ?? ""}>
+              <option value="">Wszyscy</option>
+              {vendorList.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Status">
+            <Select name="status" defaultValue={filters.status ?? ""}>
+              <option value="">Wszystkie</option>
+              {Object.entries(labels.punchListStatus).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </Select>
+          </Field>
+          <Field label="Waga">
+            <Select name="severity" defaultValue={filters.severity ?? ""}>
+              <option value="">Wszystkie</option>
+              {Object.entries(labels.punchListSeverity).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </Select>
+          </Field>
+          <div className="flex items-end">
+            <Button type="submit" variant="secondary" size="sm">Filtruj</Button>
           </div>
         </form>
       </Card>

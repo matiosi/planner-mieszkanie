@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
-import { labelFor, labels, statusVariant } from "@/lib/labels";
+import { labels, statusVariant } from "@/lib/labels";
 import { formatDate, formatCurrency } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertPayment, deletePayment } from "@/app/actions/payments";

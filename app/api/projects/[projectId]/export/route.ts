@@ -70,7 +70,7 @@ export async function GET(
         "Content-Disposition": `attachment; filename="projekt-eksport.zip"`,
       },
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Export failed" }, { status: 500 });
   }
 }

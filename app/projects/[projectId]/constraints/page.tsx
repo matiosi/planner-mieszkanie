@@ -18,10 +18,6 @@ const CONSTRAINT_TYPES = [
   { value: "BUDGET_CONSTRAINT", label: "Budżetowe", variant: "amber" as const },
 ];
 
-function typeLabel(type: string) {
-  return CONSTRAINT_TYPES.find((t) => t.value === type) ?? { label: type, variant: "gray" as const };
-}
-
 export default async function ConstraintsPage({
   params,
 }: {

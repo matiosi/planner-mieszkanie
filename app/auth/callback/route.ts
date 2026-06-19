@@ -2,11 +2,16 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicSiteUrl } from "@/lib/env";
 
+function safeNext(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/projects";
+  return value;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const siteUrl = getPublicSiteUrl(request.headers);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/projects";
+  const next = safeNext(searchParams.get("next"));
 
   if (code) {
     const supabase = await createClient();

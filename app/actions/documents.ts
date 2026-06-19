@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser, getString } from "@/lib/data";
+import { DOCUMENT_UPLOAD_POLICY, assertUpload, safeStoragePath } from "@/lib/security";
 
 export async function uploadDocument(projectId: string, formData: FormData) {
   const supabase = await createClient();
@@ -28,9 +29,8 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   let fileSize: number | null = null;
 
   if (file && file.size > 0) {
-    const ext = file.name.split(".").pop() ?? "bin";
-    const uuid = crypto.randomUUID();
-    storagePath = `users/${user.id}/projects/${projectId}/documents/${uuid}-${file.name}`;
+    assertUpload(file, DOCUMENT_UPLOAD_POLICY);
+    storagePath = safeStoragePath(user.id, projectId, "documents", file.type);
     storageBucket = "documents";
 
     const bytes = await file.arrayBuffer();

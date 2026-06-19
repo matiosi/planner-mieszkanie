@@ -13,12 +13,12 @@ export default async function JoinPage({
 
   // Sprawdź czy zaproszenie istnieje
   const { data: invitation } = await supabase
-    .from("pending_invitations")
-    .select("id,email,role,project_id,project:projects(name)")
+      .from("pending_invitations")
+    .select("id,email,role,project_id,expires_at,project:projects(name)")
     .eq("token", token)
     .single();
 
-  if (!invitation) {
+  if (!invitation || (invitation.expires_at && new Date(invitation.expires_at) < new Date())) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center space-y-4">

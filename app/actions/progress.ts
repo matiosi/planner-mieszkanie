@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser, getString } from "@/lib/data";
+import { IMAGE_UPLOAD_POLICY, assertUpload, safeStoragePath } from "@/lib/security";
 
 export async function uploadProgressPhoto(projectId: string, formData: FormData) {
   const supabase = await createClient();
@@ -16,10 +17,9 @@ export async function uploadProgressPhoto(projectId: string, formData: FormData)
 
   const file = formData.get("file") as File | null;
   if (!file || file.size === 0) throw new Error("Zdjęcie jest wymagane");
+  assertUpload(file, IMAGE_UPLOAD_POLICY);
 
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const uuid = crypto.randomUUID();
-  const storagePath = `users/${user.id}/projects/${projectId}/progress/${uuid}.${ext}`;
+  const storagePath = safeStoragePath(user.id, projectId, "progress", file.type);
 
   const bytes = await file.arrayBuffer();
   const { error: uploadError } = await supabase.storage

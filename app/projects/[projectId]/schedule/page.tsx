@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
 import { ScheduleGantt } from "@/components/schedule-gantt";
-import { labelFor, labels, statusVariant } from "@/lib/labels";
+import { labels, statusVariant } from "@/lib/labels";
 import { formatDate } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
 import { upsertScheduleItem, deleteScheduleItem } from "@/app/actions/schedule";

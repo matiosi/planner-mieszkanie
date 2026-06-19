@@ -13,8 +13,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { inputClass } from "@/components/ui/input";
-import { AlertTriangle, TrendingUp, CheckCircle2, Circle, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock } from "lucide-react";
 
 export default async function ProjectDashboardPage({
   params,
@@ -22,7 +21,7 @@ export default async function ProjectDashboardPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const { project, rooms, budget, tasks, decisions, products, vendors, inspirations, differences } =
+  const { project, rooms, budget, tasks, decisions, inspirations, differences } =
     await getDashboard(projectId);
 
   const planned = budget.reduce((s, b) => s + Number(b.planned_cost ?? 0), 0);
@@ -34,7 +33,6 @@ export default async function ProjectDashboardPage({
   ).length;
   const openDecisions = decisions.filter((d) => d.status !== "DECIDED").length;
   const needsDiscussion = differences.filter((d) => d.status === "NEEDS_DISCUSSION").length;
-  const budgetUsed = planned > 0 ? Math.round((actual / planned) * 100) : 0;
 
   return (
     <>

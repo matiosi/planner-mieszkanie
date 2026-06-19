@@ -5,8 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Grid3X3 } from "lucide-react";
 
-export function TilesCalculator({ projectId }: { projectId: string }) {
+export function TilesCalculator(_props: { projectId: string }) {
+  void _props;
   const [area, setArea] = useState("");
   const [tileW, setTileW] = useState("");
   const [tileH, setTileH] = useState("");
@@ -34,7 +36,7 @@ export function TilesCalculator({ projectId }: { projectId: string }) {
 
   return (
     <Card>
-      <h2 className="font-semibold mb-4">🔲 Płytki / Kafelki</h2>
+      <h2 className="font-semibold mb-4 flex items-center gap-2"><Grid3X3 className="h-4 w-4" /> Płytki / Kafelki</h2>
       <div className="space-y-3">
         <Field label="Powierzchnia (m²)">
           <Input

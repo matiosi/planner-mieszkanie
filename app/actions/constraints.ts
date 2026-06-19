@@ -15,7 +15,7 @@ export async function upsertConstraint(projectId: string, formData: FormData) {
   };
 
   if (id) {
-    const { error } = await supabase.from("project_constraints").update(payload).eq("id", id);
+    const { error } = await supabase.from("project_constraints").update(payload).eq("id", id).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from("project_constraints").insert(payload);
@@ -28,7 +28,7 @@ export async function upsertConstraint(projectId: string, formData: FormData) {
 export async function deleteConstraint(projectId: string, formData: FormData) {
   const { supabase } = await requireProject(projectId);
   const id = formData.get("id") as string;
-  const { error } = await supabase.from("project_constraints").delete().eq("id", id);
+  const { error } = await supabase.from("project_constraints").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/constraints`);
 }
