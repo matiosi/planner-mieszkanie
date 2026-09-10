@@ -65,6 +65,7 @@ export async function deleteProject(projectId: string) {
     removeStoragePrefix(supabase, "documents", `users/${uid}/projects/${pid}/documents`),
     removeStoragePrefix(supabase, "progress-photos", `users/${uid}/projects/${pid}/progress`),
     removeStoragePrefix(supabase, "punch-list", `users/${uid}/projects/${pid}/punch-list`),
+    removeStoragePrefix(supabase, "survey-scans", `users/${uid}/projects/${pid}/survey-scans`),
   ]);
   const { error } = await supabase.from("projects").delete().eq("id", projectId);
   if (error) throw new Error(error.message);

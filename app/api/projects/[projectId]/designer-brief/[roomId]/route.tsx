@@ -154,6 +154,36 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#9ca3af",
   },
+  surveyHeader: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#64748b",
+    paddingBottom: 12,
+    marginBottom: 20,
+  },
+  surveyTitle: {
+    fontSize: 18,
+    fontFamily: "Helvetica-Bold",
+    color: "#111",
+    marginBottom: 4,
+  },
+  surveySubtitle: {
+    fontSize: 10,
+    color: "#6b7280",
+  },
+  scanFrame: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    backgroundColor: "#f8fafc",
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scanImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+  },
 });
 
 interface BriefPDFProps {
@@ -171,6 +201,12 @@ interface BriefPDFProps {
     external_url: string | null;
     imageUrl: string | null;
   }[];
+  surveyScans: {
+    id: string;
+    title: string;
+    roomName: string | null;
+    imageUrl: string | null;
+  }[];
   generatedAt: string;
 }
 
@@ -182,6 +218,7 @@ function BriefPDF({
   note,
   constraints,
   inspirations,
+  surveyScans,
   generatedAt,
 }: BriefPDFProps) {
   return (
@@ -277,6 +314,27 @@ function BriefPDF({
           <Text style={styles.footerText}>{generatedAt}</Text>
         </View>
       </Page>
+      {surveyScans.map((scan) => (
+        <Page key={scan.id} size="A4" style={styles.page}>
+          <View style={styles.surveyHeader}>
+            <Text style={styles.surveyTitle}>Ankieta</Text>
+            <Text style={styles.surveySubtitle}>
+              {scan.title}{scan.roomName ? ` — ${scan.roomName}` : ""}
+            </Text>
+          </View>
+          <View style={styles.scanFrame}>
+            {scan.imageUrl ? (
+              <Image src={scan.imageUrl} style={styles.scanImage} />
+            ) : (
+              <Text style={styles.inspirationNoImageText}>brak zdjęcia</Text>
+            )}
+          </View>
+          <View style={styles.footer} fixed>
+            <Text style={styles.footerText}>{projectName} — ankieta</Text>
+            <Text style={styles.footerText}>{generatedAt}</Text>
+          </View>
+        </Page>
+      ))}
     </Document>
   );
 }
@@ -296,6 +354,7 @@ export async function GET(
       { data: briefNote },
       { data: project },
       { data: constraints },
+      { data: surveyScans },
     ] = await Promise.all([
       supabase
         .from("rooms")
@@ -326,6 +385,12 @@ export async function GET(
         .select("type,description")
         .eq("project_id", projectId)
         .eq("room_id", roomId),
+      supabase
+        .from("survey_scans")
+        .select("id,title,room_id,storage_bucket,storage_path")
+        .eq("project_id", projectId)
+        .or(`room_id.eq.${roomId},room_id.is.null`)
+        .order("created_at"),
     ]);
 
     if (!room) {
@@ -356,6 +421,15 @@ export async function GET(
       })
     );
 
+    const surveyScansWithImages = await Promise.all(
+      (surveyScans ?? []).map(async (scan) => ({
+        id: scan.id,
+        title: scan.title,
+        roomName: scan.room_id ? room.name : null,
+        imageUrl: await signedUrl(scan.storage_bucket, scan.storage_path),
+      }))
+    );
+
     const projectData = project ?? {
       name: "Projekt",
       style: null,
@@ -378,6 +452,7 @@ export async function GET(
         note={briefNote?.note ?? null}
         constraints={constraints ?? []}
         inspirations={inspirationsWithImages}
+        surveyScans={surveyScansWithImages}
         generatedAt={now}
       />
     );

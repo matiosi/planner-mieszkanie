@@ -12,7 +12,7 @@ export async function GET(
     const supabase = await createClient();
     await requireUser();
 
-    const [{ data: rooms }, { data: inspirations }, { data: briefNotes }, { data: project }] =
+    const [{ data: rooms }, { data: inspirations }, { data: briefNotes }, { data: project }, { data: surveyScans }] =
       await Promise.all([
         supabase
           .from("rooms")
@@ -35,6 +35,11 @@ export async function GET(
           .select("name,style,area,description")
           .eq("id", projectId)
           .single(),
+        supabase
+          .from("survey_scans")
+          .select("id,title,storage_bucket,storage_path,original_file_name")
+          .eq("project_id", projectId)
+          .order("created_at"),
       ]);
 
     const zip = new JSZip();
@@ -94,6 +99,26 @@ export async function GET(
 
       roomFolder.file("info.txt", roomInfo);
       readme += `[${room.name}] — ${roomInsps.length} inspiracji\n`;
+    }
+
+    if (surveyScans?.length) {
+      const surveyFolder = zip.folder("Ankieta");
+      if (surveyFolder) {
+        for (const [index, scan] of surveyScans.entries()) {
+          try {
+            const url = await signedUrl(scan.storage_bucket, scan.storage_path);
+            if (!url) continue;
+            const response = await fetch(url);
+            if (!response.ok) continue;
+            const extension = scan.storage_path.split(".").pop() ?? "jpg";
+            const safeTitle = scan.title.replace(/[^a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, "_");
+            surveyFolder.file(`${String(index + 1).padStart(2, "0")}-${safeTitle}.${extension}`, await response.arrayBuffer());
+          } catch {
+            // Skip scans that cannot be downloaded.
+          }
+        }
+      }
+      readme += `\n[Ankieta] — ${surveyScans.length} zdjęć\n`;
     }
 
     zip.file("README.txt", readme);
