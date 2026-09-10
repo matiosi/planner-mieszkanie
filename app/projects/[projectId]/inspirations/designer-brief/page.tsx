@@ -110,6 +110,8 @@ export default async function DesignerBriefPage({
                       <img
                         src={urlMap[insp.id]!}
                         alt={insp.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-36 w-full object-cover"
                       />
                     )}
@@ -134,7 +136,13 @@ export default async function DesignerBriefPage({
               {noRoomIns.map((insp) => (
                 <div key={insp.id} className="rounded-md border border-border overflow-hidden">
                   {urlMap[insp.id] && (
-                    <img src={urlMap[insp.id]!} alt={insp.title} className="h-36 w-full object-cover" />
+                    <img
+                      src={urlMap[insp.id]!}
+                      alt={insp.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-36 w-full object-cover"
+                    />
                   )}
                   <div className="p-2">
                     <p className="text-sm font-medium">{insp.title}</p>

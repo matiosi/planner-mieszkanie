@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { updateProject, deleteProject, duplicateProject } from "@/app/actions/projects";
 import { Copy } from "lucide-react";
 import { DeleteButton } from "@/components/delete-button";
@@ -45,9 +46,9 @@ export default async function ProjectDashboardPage({
               {labelFor(labels.projectStage, project.stage)}
             </Badge>
             <form action={duplicateProject.bind(null, projectId)}>
-              <Button type="submit" variant="secondary" size="sm">
+              <PendingSubmitButton type="submit" variant="secondary" size="sm" pendingLabel="Duplikowanie…">
                 <Copy className="h-4 w-4" /> Duplikuj
-              </Button>
+              </PendingSubmitButton>
             </form>
           </div>
         }
@@ -167,7 +168,7 @@ export default async function ProjectDashboardPage({
             <Field label="Opis">
               <Textarea name="description" rows={2} defaultValue={project.description ?? ""} />
             </Field>
-            <Button type="submit" size="sm">Zapisz</Button>
+            <PendingSubmitButton type="submit" size="sm">Zapisz</PendingSubmitButton>
           </form>
           <div className="mt-4 pt-4 border-t border-border">
             <DeleteButton

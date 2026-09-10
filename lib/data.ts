@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export const PROJECT_ROLES = ["OWNER", "EDITOR", "VIEWER", "DESIGNER", "CONTRACTOR"] as const;
@@ -12,14 +13,14 @@ const ROLE_RANK: Record<ProjectRole, number> = {
   VIEWER: 10,
 };
 
-export async function requireUser() {
+export const requireUser = cache(async function requireUser() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   return { supabase, user };
-}
+});
 
-export async function requireProjectAccess(projectId: string) {
+export const requireProjectAccess = cache(async function requireProjectAccess(projectId: string) {
   const { supabase, user } = await requireUser();
   const { data: project, error } = await supabase
     .from("projects")
@@ -41,7 +42,7 @@ export async function requireProjectAccess(projectId: string) {
 
   if (!member?.role) notFound();
   return { supabase, user, project, role: member.role as ProjectRole };
-}
+});
 
 export async function requireProjectRole(projectId: string, allowedRoles: ProjectRole[]) {
   const ctx = await requireProjectAccess(projectId);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X, LogOut } from "lucide-react";
 import { SidebarNav, SidebarLogo } from "@/components/sidebar-nav";
@@ -14,6 +14,14 @@ interface Props {
 export function MobileSidebar({ projectId, userEmail }: Props) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    window.requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }, []);
 
   // Zamknij po nawigacji
   useEffect(() => {
@@ -26,13 +34,52 @@ export function MobileSidebar({ projectId, userEmail }: Props) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  // Trap focus in the dialog and allow keyboard users to close it.
+  useEffect(() => {
+    if (!open) return;
+
+    const focusCloseButton = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const selector = 'a[href], button:not([disabled]), select:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>(selector) ?? []);
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.cancelAnimationFrame(focusCloseButton);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [closeMenu, open]);
+
   return (
     <>
       {/* Przycisk hamburgera */}
       <button
+        ref={menuButtonRef}
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center w-9 h-9 rounded-md hover:bg-accent transition-colors"
+        className="flex h-9 w-9 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent"
         aria-label="Otwórz menu"
+        aria-controls="mobile-navigation"
+        aria-expanded={open}
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -41,14 +88,21 @@ export function MobileSidebar({ projectId, userEmail }: Props) {
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
+          onClick={closeMenu}
           aria-hidden
         />
       )}
 
       {/* Drawer */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] bg-background border-r border-border shadow-xl transition-transform duration-300 ease-in-out ${
+      <aside
+        ref={drawerRef}
+        id="mobile-navigation"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menu główne"
+        aria-hidden={!open}
+        inert={!open}
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-border bg-background shadow-xl transition-transform duration-300 ease-in-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -56,8 +110,9 @@ export function MobileSidebar({ projectId, userEmail }: Props) {
         <div className="flex h-14 items-center justify-between border-b border-border px-4 shrink-0">
           <SidebarLogo />
           <button
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-accent transition-colors"
+            ref={closeButtonRef}
+            onClick={closeMenu}
+            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent"
             aria-label="Zamknij menu"
           >
             <X className="h-4 w-4" />
@@ -95,7 +150,7 @@ export function MobileSidebar({ projectId, userEmail }: Props) {
             </button>
           </form>
         </div>
-      </div>
+      </aside>
     </>
   );
 }

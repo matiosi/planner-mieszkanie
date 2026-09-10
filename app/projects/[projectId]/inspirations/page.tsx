@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -85,9 +86,9 @@ export default async function InspirationsPage({
               <input type="checkbox" name="selected_for_designer" className="h-4 w-4 rounded border-border" />
               Wybierz dla projektanta
             </label>
-            <Button type="submit" size="sm">
+            <PendingSubmitButton type="submit" size="sm" pendingLabel="Dodawanie…">
               <Plus className="h-4 w-4" /> Dodaj
-            </Button>
+            </PendingSubmitButton>
           </div>
         </form>
       </Card>

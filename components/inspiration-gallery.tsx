@@ -130,6 +130,8 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
                   <img
                     src={insp.displayUrl}
                     alt={insp.title}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -240,6 +242,7 @@ export function InspirationGallery({ projectId, inspirations, roomList }: Props)
               <img
                 src={active.displayUrl}
                 alt={active.title}
+                decoding="async"
                 className="max-h-[75vh] max-w-full object-contain rounded-md"
               />
             ) : (

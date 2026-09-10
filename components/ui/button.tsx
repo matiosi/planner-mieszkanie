@@ -20,7 +20,7 @@ const sizeClass = { sm: "h-8 px-3 text-xs", md: "h-9 px-4 text-sm", lg: "h-10 px
 
 export function Button({ variant = "primary", size = "md", className, children, asChild, ...props }: ButtonProps) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
     variantClass[variant],
     sizeClass[size],
     className

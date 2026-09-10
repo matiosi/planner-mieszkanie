@@ -1,5 +1,5 @@
 import { LogOut } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/data";
 import { SidebarNav, SidebarLogo } from "@/components/sidebar-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileSidebar } from "@/components/mobile-sidebar";
@@ -11,11 +11,16 @@ export async function AppShell({
   projectId?: string;
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user } = await requireUser();
 
   return (
     <div className="min-h-screen bg-background">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-4 z-[60] rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      >
+        Przejdź do treści
+      </a>
       {/* Mobile header */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
         <SidebarLogo />
@@ -61,8 +66,8 @@ export async function AppShell({
         </aside>
 
         {/* Main content */}
-        <main className="md:ml-[260px] min-h-screen">
-          <div className="p-4 md:p-8">{children}</div>
+        <main id="main-content" tabIndex={-1} className="min-h-screen focus:outline-none md:ml-[260px]">
+          <div className="mx-auto w-full max-w-[1440px] p-4 md:p-8">{children}</div>
         </main>
       </div>
     </div>

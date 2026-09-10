@@ -106,8 +106,9 @@ export function SidebarNav({ projectId }: { projectId: string }) {
                 <Link
                   key={item.href}
                   href={href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground",
                     active && "bg-accent font-medium text-accent-foreground"
                   )}
                 >

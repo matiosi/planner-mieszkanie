@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireUser } from "@/lib/data";
 import { formatCurrency, formatArea, formatDate } from "@/lib/formatters";
@@ -31,10 +32,10 @@ export default async function ProjectsPage() {
               </Link>
             </Button>
             <form action={createDemoProject}>
-              <Button type="submit" variant="secondary" size="sm">
+              <PendingSubmitButton type="submit" variant="secondary" size="sm" pendingLabel="Tworzenie…">
                 <Wand2 className="h-4 w-4" />
                 Przykładowe mieszkanie
-              </Button>
+              </PendingSubmitButton>
             </form>
             <Button asChild size="sm">
               <Link href="/projects/new">
