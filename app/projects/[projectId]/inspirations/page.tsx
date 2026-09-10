@@ -76,7 +76,6 @@ export default async function InspirationsPage({
           </Field>
           <Field label="Lub link zewnętrzny" className="sm:col-span-2">
             <Input name="external_url" type="url" placeholder="https://www.pinterest.com/pin/…" />
-            <input type="hidden" name="source" value="URL" />
           </Field>
           <Field label="Notatka dla projektanta" className="sm:col-span-2">
             <Input name="designer_note" placeholder="Co podoba Ci się w tej inspiracji?" />
