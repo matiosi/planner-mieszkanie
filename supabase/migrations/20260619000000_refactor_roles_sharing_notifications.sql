@@ -4,10 +4,10 @@ alter table public.pending_invitations
   add column if not exists expires_at timestamptz not null default (now() + interval '14 days');
 
 alter table public.share_links
-  alter column token set default encode(gen_random_bytes(32), 'hex');
+  alter column token set default encode(extensions.gen_random_bytes(32), 'hex');
 
 alter table public.pending_invitations
-  alter column token set default encode(gen_random_bytes(32), 'hex');
+  alter column token set default encode(extensions.gen_random_bytes(32), 'hex');
 
 alter table public.punch_list_items
   add column if not exists acceptance_phase text not null default 'FINAL',
