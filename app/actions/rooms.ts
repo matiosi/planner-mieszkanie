@@ -41,3 +41,23 @@ export async function deleteRoom(projectId: string, formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath(roomsPath(projectId));
 }
+
+export async function renameRoom(projectId: string, formData: FormData) {
+  const { supabase } = await requireProject(projectId);
+  const id = getString(formData, "id");
+  const name = getString(formData, "name").trim();
+
+  if (!id) throw new Error("ID pomieszczenia jest wymagane.");
+  if (!name) throw new Error("Nazwa pomieszczenia jest wymagana.");
+
+  const { error } = await supabase
+    .from("rooms")
+    .update({ name })
+    .eq("id", id)
+    .eq("project_id", projectId);
+  if (error) throw new Error(error.message);
+
+  revalidatePath(roomsPath(projectId));
+  revalidatePath(`/projects/${projectId}/rooms/${id}`);
+  revalidatePath(`/projects/${projectId}/inspirations/designer-brief`);
+}

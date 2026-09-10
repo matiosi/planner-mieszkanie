@@ -67,12 +67,20 @@ export default async function DesignerBriefPage({
         title="Brief dla projektanta"
         description="Inspiracje wybrane dla projektanta pogrupowane po pomieszczeniach."
         actions={
-          <a href={`/api/projects/${projectId}/designer-brief/all`} download>
-            <Button size="sm">
-              <Download className="h-4 w-4" />
-              Pobierz ZIP
-            </Button>
-          </a>
+          <div className="flex items-center gap-2">
+            <a href={`/api/projects/${projectId}/designer-brief/pdf`} download>
+              <Button size="sm">
+                <FileText className="h-4 w-4" />
+                Pobierz PDF
+              </Button>
+            </a>
+            <a href={`/api/projects/${projectId}/designer-brief/all`} download>
+              <Button variant="secondary" size="sm">
+                <Download className="h-4 w-4" />
+                ZIP źródłowy
+              </Button>
+            </a>
+          </div>
         }
       />
 
@@ -92,7 +100,7 @@ export default async function DesignerBriefPage({
           <div>
             <h2 className="font-semibold">Zdjęcia ankiety</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Dodaj zdjęcia ankiety. Pojawią się na końcu PDF briefu jako strony skanu.
+              Dodaj skany odpowiedzi na ankietę. W pełnym PDF pojawią się przed inspiracjami.
             </p>
           </div>
         </div>

@@ -22,7 +22,7 @@ export async function GET(
         supabase
           .from("inspirations")
           .select(
-            "id,title,source,category,external_url,storage_bucket,storage_path,designer_note,room_id"
+            "id,title,source,category,description,external_url,storage_bucket,storage_path,designer_note,room_id"
           )
           .eq("project_id", projectId)
           .eq("selected_for_designer", true),
@@ -75,6 +75,7 @@ export async function GET(
       for (const insp of roomInsps) {
         roomInfo += `- ${insp.title}`;
         if (insp.category) roomInfo += ` [${insp.category}]`;
+        if (insp.description) roomInfo += `\n  Opis: ${insp.description}`;
         if (insp.designer_note) roomInfo += `\n  Notatka: ${insp.designer_note}`;
         if (insp.external_url) roomInfo += `\n  Link: ${insp.external_url}`;
         roomInfo += "\n";

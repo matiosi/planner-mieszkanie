@@ -11,8 +11,9 @@ import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatArea, formatCurrency } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
-import { upsertRoom, deleteRoom } from "@/app/actions/rooms";
-import { Plus, ChevronRight } from "lucide-react";
+import { upsertRoom, deleteRoom, renameRoom } from "@/app/actions/rooms";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { Plus, ChevronRight, Pencil } from "lucide-react";
 
 export default async function RoomsPage({
   params,
@@ -94,6 +95,19 @@ export default async function RoomsPage({
                 {room.area && <span>{formatArea(room.area)}</span>}
                 {room.budget_planned && <span>{formatCurrency(room.budget_planned)}</span>}
               </div>
+              <form action={renameRoom.bind(null, projectId)} className="flex items-center gap-2">
+                <input type="hidden" name="id" value={room.id} />
+                <Input
+                  name="name"
+                  defaultValue={room.name}
+                  required
+                  aria-label={`Nazwa pomieszczenia: ${room.name}`}
+                  className="h-8"
+                />
+                <PendingSubmitButton type="submit" size="sm" variant="secondary" pendingLabel="Zapis…">
+                  <Pencil className="h-3.5 w-3.5" /> Zmień
+                </PendingSubmitButton>
+              </form>
               <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <Button asChild variant="secondary" size="sm" className="flex-1">
                   <Link href={`/projects/${projectId}/rooms/${room.id}`}>

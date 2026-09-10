@@ -197,6 +197,7 @@ interface BriefPDFProps {
     id: string;
     title: string;
     category: string | null;
+    description: string | null;
     designer_note: string | null;
     external_url: string | null;
     imageUrl: string | null;
@@ -223,6 +224,27 @@ function BriefPDF({
 }: BriefPDFProps) {
   return (
     <Document>
+      {surveyScans.map((scan) => (
+        <Page key={scan.id} size="A4" style={styles.page}>
+          <View style={styles.surveyHeader}>
+            <Text style={styles.surveyTitle}>Odpowiedź na ankietę</Text>
+            <Text style={styles.surveySubtitle}>
+              {scan.title}{scan.roomName ? ` — ${scan.roomName}` : ""}
+            </Text>
+          </View>
+          <View style={styles.scanFrame}>
+            {scan.imageUrl ? (
+              <Image src={scan.imageUrl} style={styles.scanImage} />
+            ) : (
+              <Text style={styles.inspirationNoImageText}>brak zdjęcia</Text>
+            )}
+          </View>
+          <View style={styles.footer} fixed>
+            <Text style={styles.footerText}>{projectName} — ankieta</Text>
+            <Text style={styles.footerText}>{generatedAt}</Text>
+          </View>
+        </Page>
+      ))}
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
@@ -288,9 +310,14 @@ function BriefPDF({
                       {insp.category}
                     </Text>
                   )}
+                  {insp.description && (
+                    <Text style={styles.inspirationNote}>
+                      {insp.description}
+                    </Text>
+                  )}
                   {insp.designer_note && (
                     <Text style={styles.inspirationNote}>
-                      {insp.designer_note}
+                      Wskazówka: {insp.designer_note}
                     </Text>
                   )}
                   {insp.external_url && (
@@ -314,27 +341,6 @@ function BriefPDF({
           <Text style={styles.footerText}>{generatedAt}</Text>
         </View>
       </Page>
-      {surveyScans.map((scan) => (
-        <Page key={scan.id} size="A4" style={styles.page}>
-          <View style={styles.surveyHeader}>
-            <Text style={styles.surveyTitle}>Ankieta</Text>
-            <Text style={styles.surveySubtitle}>
-              {scan.title}{scan.roomName ? ` — ${scan.roomName}` : ""}
-            </Text>
-          </View>
-          <View style={styles.scanFrame}>
-            {scan.imageUrl ? (
-              <Image src={scan.imageUrl} style={styles.scanImage} />
-            ) : (
-              <Text style={styles.inspirationNoImageText}>brak zdjęcia</Text>
-            )}
-          </View>
-          <View style={styles.footer} fixed>
-            <Text style={styles.footerText}>{projectName} — ankieta</Text>
-            <Text style={styles.footerText}>{generatedAt}</Text>
-          </View>
-        </Page>
-      ))}
     </Document>
   );
 }
@@ -364,7 +370,7 @@ export async function GET(
       supabase
         .from("inspirations")
         .select(
-          "id,title,source,category,external_url,storage_bucket,storage_path,designer_note"
+          "id,title,source,category,description,external_url,storage_bucket,storage_path,designer_note"
         )
         .eq("project_id", projectId)
         .eq("room_id", roomId)
@@ -414,6 +420,7 @@ export async function GET(
           id: insp.id,
           title: insp.title,
           category: insp.category,
+          description: insp.description,
           designer_note: insp.designer_note,
           external_url: insp.external_url,
           imageUrl,

@@ -14,8 +14,15 @@ export default async function ExportPage({
 
   const exports = [
     {
+      title: "Brief dla projektanta (PDF)",
+      description: "Odpowiedzi na ankietę, inspiracje z opisami i notatkami, pogrupowane po pomieszczeniach",
+      href: `/api/projects/${projectId}/designer-brief/pdf`,
+      icon: FileDown,
+      format: "PDF",
+    },
+    {
       title: "Brief dla projektanta (ZIP)",
-      description: "Wszystkie wybrane inspiracje z notatkami, pogrupowane po pomieszczeniach",
+      description: "Materiały źródłowe: obrazy inspiracji, skany ankiety i pliki tekstowe",
       href: `/api/projects/${projectId}/designer-brief/all`,
       icon: Package,
       format: "ZIP",
