@@ -23,7 +23,7 @@ cp .env.example .env
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=http://localhost:5173
 ```
 
 4. Link Supabase and apply migrations:
@@ -36,7 +36,7 @@ supabase db push
 5. Enable Google OAuth in Supabase Auth and add this callback URL:
 
 ```txt
-http://localhost:3000/auth/callback
+http://localhost:5173/auth/callback
 ```
 
 6. Start the app:
@@ -45,7 +45,7 @@ http://localhost:3000/auth/callback
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:5173.
 
 ## Supabase Folder
 

@@ -21,8 +21,13 @@ export default function ErrorPage({
         <AlertTriangle className="mx-auto h-10 w-10 text-destructive" />
         <h1 className="mt-4 text-xl font-semibold">Wystąpił błąd</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {error.message || "Coś poszło nie tak. Spróbuj ponownie."}
+          Nie udało się otworzyć tej strony. Spróbuj ponownie za chwilę.
         </p>
+        {error.digest && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Identyfikator błędu: {error.digest}
+          </p>
+        )}
         <Button onClick={reset} className="mt-6">
           Spróbuj ponownie
         </Button>

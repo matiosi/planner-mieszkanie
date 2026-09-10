@@ -6,8 +6,13 @@ import { Button } from "@/components/ui/button";
 import { requireProjectAccess } from "@/lib/data";
 import { computeNextActions } from "@/lib/next-actions";
 import { formatDate } from "@/lib/formatters";
-import { markAllNotificationsRead, markNotificationRead } from "@/app/actions/notifications";
-import { Bell, CheckCircle2 } from "lucide-react";
+import {
+  ignoreNotification,
+  markAllNotificationsRead,
+  markNotificationRead,
+  restoreNotification,
+} from "@/app/actions/notifications";
+import { Bell, CheckCircle2, EyeOff, RotateCcw } from "lucide-react";
 
 export default async function NotificationsPage({
   params,
@@ -20,13 +25,15 @@ export default async function NotificationsPage({
     computeNextActions(projectId, supabase),
     supabase
       .from("notifications")
-      .select("id,title,body,type,entity_type,entity_id,read,created_at")
+      .select("id,title,body,type,entity_type,entity_id,read,ignored_at,created_at")
       .eq("project_id", projectId)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
 
-  const unread = (notifications ?? []).filter((item) => !item.read);
+  const activeNotifications = (notifications ?? []).filter((item) => !item.ignored_at);
+  const ignoredNotifications = (notifications ?? []).filter((item) => item.ignored_at);
+  const unread = activeNotifications.filter((item) => !item.read);
 
   return (
     <>
@@ -69,7 +76,7 @@ export default async function NotificationsPage({
       </Card>
 
       <div className="mt-6 grid gap-3">
-        {(notifications ?? []).map((item) => (
+        {activeNotifications.map((item) => (
           <Card key={item.id} className={item.read ? "opacity-70" : ""}>
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -80,21 +87,57 @@ export default async function NotificationsPage({
                 {item.body && <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>}
                 <p className="mt-2 text-xs text-muted-foreground">{formatDate(item.created_at.slice(0, 10))}</p>
               </div>
-              {!item.read && (
-                <form action={markNotificationRead.bind(null, projectId)}>
+              <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                {!item.read && (
+                  <form action={markNotificationRead.bind(null, projectId)}>
+                    <input type="hidden" name="id" value={item.id} />
+                    <Button type="submit" variant="ghost" size="sm">Przeczytane</Button>
+                  </form>
+                )}
+                <form action={ignoreNotification.bind(null, projectId)}>
                   <input type="hidden" name="id" value={item.id} />
-                  <Button type="submit" variant="ghost" size="sm">Przeczytane</Button>
+                  <Button type="submit" variant="ghost" size="sm">
+                    <EyeOff className="h-4 w-4" /> Ignoruj
+                  </Button>
                 </form>
-              )}
+              </div>
             </div>
           </Card>
         ))}
-        {!(notifications ?? []).length && (
+        {!activeNotifications.length && (
           <p className="rounded-md border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
             Brak zapisanych powiadomień.
           </p>
         )}
       </div>
+
+      {!!ignoredNotifications.length && (
+        <Card className="mt-6">
+          <div className="mb-3 flex items-center gap-2">
+            <EyeOff className="h-4 w-4 text-muted-foreground" />
+            <h2 className="font-semibold">Ignorowane</h2>
+          </div>
+          <div className="grid gap-2">
+            {ignoredNotifications.map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-3 rounded-md border border-border p-3 opacity-70">
+                <div>
+                  <p className="text-sm font-medium">{item.title}</p>
+                  {item.body && <p className="mt-1 text-xs text-muted-foreground">{item.body}</p>}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Zignorowano: {item.ignored_at ? formatDate(item.ignored_at.slice(0, 10)) : "brak daty"}
+                  </p>
+                </div>
+                <form action={restoreNotification.bind(null, projectId)}>
+                  <input type="hidden" name="id" value={item.id} />
+                  <Button type="submit" variant="secondary" size="sm">
+                    <RotateCcw className="h-4 w-4" /> Przywróć
+                  </Button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </>
   );
 }

@@ -103,9 +103,30 @@ export async function getDashboard(projectId: string) {
 
 export async function signedUrl(bucket?: string | null, path?: string | null): Promise<string | null> {
   if (!bucket || !path) return null;
-  const supabase = await createClient();
-  const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
-  return data?.signedUrl ?? null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+
+    if (error) {
+      console.error("Nie udało się wygenerować podpisanego URL pliku.", {
+        bucket,
+        path,
+        message: error.message,
+      });
+      return null;
+    }
+
+    return data?.signedUrl ?? null;
+  } catch (error) {
+    // A missing file or a temporary Storage failure must not prevent an entire
+    // Server Component page from rendering. Callers already handle a null URL.
+    console.error("Nie udało się wygenerować podpisanego URL pliku.", {
+      bucket,
+      path,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
 }
 
 // Helpery do parsowania FormData
