@@ -8,7 +8,7 @@ import {
   Truck, Lightbulb, Users, Image, Map, FileText, Shield, Ruler,
   Calculator, Camera, ClipboardCheck, Calendar, CreditCard, TrendingUp,
   MessageSquare, Download, PaintBucket, AlertOctagon, Users2, CheckSquare,
-  Clock, BarChart2, Bell, Share2,
+  Clock, BarChart2, Share2,
 } from "lucide-react";
 
 const navGroups = [
@@ -16,7 +16,7 @@ const navGroups = [
     label: "Główne",
     items: [
       { label: "Pulpit", href: "", icon: Home },
-      { label: "Co teraz?", href: "next-actions", icon: Wand2 },
+      { label: "Alerty i priorytety", href: "next-actions", icon: Wand2 },
     ],
   },
   {
@@ -69,7 +69,6 @@ const navGroups = [
     label: "Inne",
     items: [
       { label: "Pytania", href: "questions", icon: MessageSquare },
-      { label: "Powiadomienia", href: "notifications", icon: Bell },
       { label: "Członkowie", href: "members", icon: Users2 },
       { label: "Udostępnianie", href: "share", icon: Share2 },
       { label: "Historia", href: "activity", icon: Clock },

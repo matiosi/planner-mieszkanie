@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { requireProject, getString, getNumber } from "@/lib/data";
+import { logActivity } from "@/lib/activity";
 
 const path = (pid: string) => `/projects/${pid}/products`;
 
 export async function upsertProduct(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase, user } = await requireProject(projectId);
   const id = getString(formData, "id");
   const payload = {
     project_id: projectId,
@@ -29,17 +30,36 @@ export async function upsertProduct(projectId: string, formData: FormData) {
     purchase_priority: getString(formData, "purchase_priority", "MEDIUM"),
     notes: getString(formData, "notes"),
   };
-  const { error } = id
-    ? await supabase.from("products").update(payload).eq("id", id).eq("project_id", projectId)
-    : await supabase.from("products").insert(payload);
+  const { data, error } = id
+    ? await supabase.from("products").update(payload).eq("id", id).eq("project_id", projectId).select("id").single()
+    : await supabase.from("products").insert(payload).select("id").single();
   if (error) throw new Error(error.message);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "product",
+    entityId: data?.id ?? id,
+    action: id ? "updated" : "created",
+    description: id ? `Edytowano produkt: "${payload.name}"` : `Dodano produkt: "${payload.name}"`,
+  });
   revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }
 
 export async function deleteProduct(projectId: string, formData: FormData) {
-  const { supabase } = await requireProject(projectId);
+  const { supabase, user } = await requireProject(projectId);
   const id = getString(formData, "id");
+  const { data: product } = await supabase.from("products").select("name").eq("id", id).eq("project_id", projectId).single();
   const { error } = await supabase.from("products").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "product",
+    entityId: id,
+    action: "deleted",
+    description: `Usunięto produkt: "${product?.name ?? id}"`,
+  });
   revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }

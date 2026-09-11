@@ -106,8 +106,8 @@ export default async function DesignerBriefPage({
         </div>
 
         <form action={uploadSurveyScan.bind(null, projectId)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Tytuł">
-            <Input name="title" placeholder="np. Ankieta — strona 1" />
+          <Field label="Tytuł (opcjonalnie)">
+            <Input name="title" placeholder="np. Ankieta remontowa" />
           </Field>
           <Field label="Pomieszczenie">
             <Select name="room_id" defaultValue="">
@@ -115,12 +115,13 @@ export default async function DesignerBriefPage({
               {roomList.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
             </Select>
           </Field>
-          <Field label="Zdjęcie ankiety *" className="sm:col-span-2">
-            <Input name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+          <Field label="Zdjęcia ankiety *" className="sm:col-span-2">
+            <Input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
+            <p className="mt-1 text-xs text-muted-foreground">Wybierz do 5 zdjęć naraz, maks. 10 MB każde.</p>
           </Field>
           <div className="sm:col-span-2 lg:col-span-4">
             <PendingSubmitButton type="submit" size="sm" pendingLabel="Dodawanie…">
-              <ScanLine className="h-4 w-4" /> Dodaj zdjęcie ankiety
+              <ScanLine className="h-4 w-4" /> Dodaj zdjęcia ankiety
             </PendingSubmitButton>
           </div>
         </form>

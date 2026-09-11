@@ -6,7 +6,7 @@ import { requireProject } from "@/lib/data";
 import { formatDate, formatDistanceToNow } from "@/lib/formatters";
 import {
   CheckSquare, Lightbulb, ShoppingBag, CreditCard, Users,
-  FileText, Wrench, AlertOctagon, Clock,
+  FileText, Wrench, AlertOctagon, Clock, MessageSquare, ReceiptText,
 } from "lucide-react";
 
 const ENTITY_ICONS: Record<string, React.ElementType> = {
@@ -18,6 +18,8 @@ const ENTITY_ICONS: Record<string, React.ElementType> = {
   document: FileText,
   vendor_meeting: Wrench,
   constraint: AlertOctagon,
+  question: MessageSquare,
+  budget_item: ReceiptText,
 };
 
 const ACTION_VARIANTS: Record<string, "green" | "red" | "gray" | "blue"> = {
@@ -69,7 +71,7 @@ export default async function ActivityPage({
       {!list.length ? (
         <EmptyState
           title="Brak historii"
-          description="Historia zapisuje się automatycznie gdy dodajesz lub edytujesz zadania, decyzje i produkty."
+          description="Historia zapisuje się automatycznie dla zadań, pytań, decyzji, produktów, płatności, dokumentów i budżetu."
           className="mt-6"
         />
       ) : (

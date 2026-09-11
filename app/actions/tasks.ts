@@ -31,6 +31,7 @@ export async function upsertTask(projectId: string, formData: FormData) {
     description: id ? `Zadanie "${title}" zaktualizowane` : `Nowe zadanie: "${title}"`,
   });
   revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }
 
 export async function deleteTask(projectId: string, formData: FormData) {
@@ -46,6 +47,7 @@ export async function deleteTask(projectId: string, formData: FormData) {
     description: `Zadanie usunięte: "${task?.title ?? id}"`,
   });
   revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }
 
 export async function addTaskDependency(projectId: string, formData: FormData) {

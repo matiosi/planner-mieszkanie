@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { requireUser, getString, getNumber } from "@/lib/data";
+import { requireProject, getString, getNumber } from "@/lib/data";
+import { logActivity } from "@/lib/activity";
+
+const path = (projectId: string) => `/projects/${projectId}/payments`;
 
 export async function upsertPayment(projectId: string, formData: FormData) {
-  const supabase = await createClient();
-  await requireUser();
+  const { supabase, user } = await requireProject(projectId);
 
   const id = getString(formData, "id", "");
   const title = getString(formData, "title");
@@ -33,25 +34,40 @@ export async function upsertPayment(projectId: string, formData: FormData) {
     notes: notes || null,
   };
 
-  if (id) {
-    const { error } = await supabase.from("payments").update(payload).eq("id", id).eq("project_id", projectId);
-    if (error) throw new Error(error.message);
-  } else {
-    const { error } = await supabase.from("payments").insert(payload);
-    if (error) throw new Error(error.message);
-  }
+  const { data, error } = id
+    ? await supabase.from("payments").update(payload).eq("id", id).eq("project_id", projectId).select("id").single()
+    : await supabase.from("payments").insert(payload).select("id").single();
+  if (error) throw new Error(error.message);
 
-  revalidatePath(`/projects/${projectId}/payments`);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "payment",
+    entityId: (data?.id ?? id) || null,
+    action: id ? "updated" : "created",
+    description: id ? `Edytowano płatność: "${title}"` : `Dodano płatność: "${title}"`,
+  });
+  revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }
 
 export async function deletePayment(projectId: string, formData: FormData) {
-  const supabase = await createClient();
-  await requireUser();
+  const { supabase, user } = await requireProject(projectId);
 
   const id = getString(formData, "id");
   if (!id) throw new Error("ID jest wymagane");
 
+  const { data: payment } = await supabase.from("payments").select("title").eq("id", id).eq("project_id", projectId).single();
   const { error } = await supabase.from("payments").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
-  revalidatePath(`/projects/${projectId}/payments`);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "payment",
+    entityId: id,
+    action: "deleted",
+    description: `Usunięto płatność: "${payment?.title ?? id}"`,
+  });
+  revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }

@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { requireUser, getString } from "@/lib/data";
+import { requireProject, getString } from "@/lib/data";
 import { DOCUMENT_UPLOAD_POLICY, assertUpload, safeStoragePath } from "@/lib/security";
+import { logActivity } from "@/lib/activity";
+
+const path = (projectId: string) => `/projects/${projectId}/documents`;
 
 export async function uploadDocument(projectId: string, formData: FormData) {
-  const supabase = await createClient();
-  const { user } = await requireUser();
+  const { supabase, user } = await requireProject(projectId);
 
   const title = getString(formData, "title");
   const type = getString(formData, "type", "OTHER");
@@ -46,7 +47,7 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     throw new Error("Plik jest wymagany");
   }
 
-  const { error } = await supabase.from("documents").insert({
+  const { data, error } = await supabase.from("documents").insert({
     project_id: projectId,
     title,
     type,
@@ -62,30 +63,48 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     mime_type: mimeType,
     original_file_name: originalFileName,
     file_size: fileSize,
-  });
+  }).select("id").single();
 
   if (error) throw new Error(error.message);
-  revalidatePath(`/projects/${projectId}/documents`);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "document",
+    entityId: data.id,
+    action: "created",
+    description: `Dodano dokument: "${title}"`,
+  });
+  revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }
 
 export async function deleteDocument(projectId: string, formData: FormData) {
-  const supabase = await createClient();
-  await requireUser();
+  const { supabase, user } = await requireProject(projectId);
 
   const id = getString(formData, "id");
   if (!id) throw new Error("ID jest wymagane");
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("storage_bucket,storage_path")
+    .select("title,storage_bucket,storage_path")
     .eq("id", id)
+    .eq("project_id", projectId)
     .single();
 
   if (doc?.storage_bucket && doc?.storage_path) {
     await supabase.storage.from(doc.storage_bucket).remove([doc.storage_path]);
   }
 
-  const { error } = await supabase.from("documents").delete().eq("id", id);
+  const { error } = await supabase.from("documents").delete().eq("id", id).eq("project_id", projectId);
   if (error) throw new Error(error.message);
-  revalidatePath(`/projects/${projectId}/documents`);
+  await logActivity(supabase, {
+    projectId,
+    userId: user.id,
+    entityType: "document",
+    entityId: id,
+    action: "deleted",
+    description: `Usunięto dokument: "${doc?.title ?? id}"`,
+  });
+  revalidatePath(path(projectId));
+  revalidatePath(`/projects/${projectId}/activity`);
 }

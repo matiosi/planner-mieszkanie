@@ -11,7 +11,7 @@ import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatDate } from "@/lib/formatters";
 import { requireProject } from "@/lib/data";
-import { upsertQuestion, deleteQuestion } from "@/app/actions/questions";
+import { answerQuestion, upsertQuestion, deleteQuestion, setQuestionStatus } from "@/app/actions/questions";
 import { Plus, HelpCircle, CheckCircle2 } from "lucide-react";
 
 export default async function QuestionsPage({
@@ -57,13 +57,6 @@ export default async function QuestionsPage({
         <form action={addQuestion} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Field label="Pytanie *" className="sm:col-span-2 lg:col-span-3">
             <Textarea name="question" required rows={2} placeholder="np. Jakie gniazdka wybrać do kuchni?" />
-          </Field>
-          <Field label="Status">
-            <Select name="status" defaultValue="OPEN">
-              {Object.entries(labels.questionStatus).map(([v, l]) => (
-                <option key={v} value={v}>{l}</option>
-              ))}
-            </Select>
           </Field>
           <Field label="Pomieszczenie">
             <Select name="room_id" defaultValue="">
@@ -112,7 +105,8 @@ export default async function QuestionsPage({
                 </div>
                 {q.answer && (
                   <div className="mt-2 rounded-md bg-green-50 border border-green-200 p-2">
-                    <p className="text-sm text-green-800">{q.answer}</p>
+                    <p className="text-xs font-medium text-green-800">Odpowiedź</p>
+                    <p className="mt-1 text-sm text-green-800">{q.answer}</p>
                   </div>
                 )}
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -123,7 +117,36 @@ export default async function QuestionsPage({
                     <span className="text-xs text-muted-foreground">Termin: {formatDate(q.due_date)}</span>
                   )}
                 </div>
-                <div className="mt-2">
+                <form action={answerQuestion.bind(null, projectId)} className="mt-4">
+                  <input type="hidden" name="id" value={q.id} />
+                  <Field label={q.answer ? "Edytuj odpowiedź" : "Dodaj odpowiedź"}>
+                    <Textarea
+                      name="answer"
+                      rows={2}
+                      defaultValue={q.answer ?? ""}
+                      required
+                      placeholder="Wpisz ustaloną odpowiedź…"
+                    />
+                  </Field>
+                  <Button type="submit" size="sm" className="mt-2">
+                    {q.answer ? "Zapisz odpowiedź" : "Odpowiedz"}
+                  </Button>
+                </form>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {q.answer && q.status !== "CLOSED" && (
+                    <form action={setQuestionStatus.bind(null, projectId)}>
+                      <input type="hidden" name="id" value={q.id} />
+                      <input type="hidden" name="status" value="CLOSED" />
+                      <Button type="submit" variant="secondary" size="sm">Zamknij</Button>
+                    </form>
+                  )}
+                  {q.answer && q.status !== "NEEDS_FOLLOW_UP" && (
+                    <form action={setQuestionStatus.bind(null, projectId)}>
+                      <input type="hidden" name="id" value={q.id} />
+                      <input type="hidden" name="status" value="NEEDS_FOLLOW_UP" />
+                      <Button type="submit" variant="ghost" size="sm">Wymaga doprecyzowania</Button>
+                    </form>
+                  )}
                   <DeleteButton
                     action={deleteQuestion.bind(null, projectId)}
                     id={q.id}
@@ -142,11 +165,22 @@ export default async function QuestionsPage({
               </h2>
               <div className="space-y-2">
                 {closed.map((q) => (
-                  <div key={q.id} className="rounded-md border border-border p-3 opacity-60">
+                  <div key={q.id} className="rounded-md border border-border p-3 opacity-70">
                     <p className="text-sm text-muted-foreground">{q.question}</p>
-                    {q.answer && (
-                      <p className="text-xs text-muted-foreground mt-1 italic">{q.answer}</p>
-                    )}
+                    {q.answer && <p className="text-xs text-muted-foreground mt-1 italic">{q.answer}</p>}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <form action={setQuestionStatus.bind(null, projectId)}>
+                        <input type="hidden" name="id" value={q.id} />
+                        <input type="hidden" name="status" value="OPEN" />
+                        <Button type="submit" variant="secondary" size="sm">Otwórz ponownie</Button>
+                      </form>
+                      <DeleteButton
+                        action={deleteQuestion.bind(null, projectId)}
+                        id={q.id}
+                        confirmMessage="Usunąć zamknięte pytanie?"
+                        size="sm"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

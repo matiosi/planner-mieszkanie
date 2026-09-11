@@ -52,8 +52,8 @@ export default async function NextActionsPage({
   return (
     <>
       <PageHeader
-        title="Co teraz?"
-        description={`Priorytety dla projektu: ${project.name}`}
+        title="Alerty i priorytety"
+        description={`Najważniejsze działania dla projektu: ${project.name}`}
       />
 
       {actions.length === 0 ? (
@@ -86,7 +86,7 @@ export default async function NextActionsPage({
 
           {/* Action list */}
           <Card>
-            <h2 className="font-semibold mb-4">Lista priorytetów</h2>
+            <h2 className="font-semibold mb-4">Co wymaga uwagi</h2>
             <div className="space-y-2">
               {actions.map((action, i) => {
                 const config = urgencyConfig[action.urgency];
