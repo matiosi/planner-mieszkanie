@@ -5,12 +5,10 @@ import { Field } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireProject, signedUrl } from "@/lib/data";
 import { updateDesignerNote } from "@/app/actions/inspirations";
-import { deleteSurveyScan, uploadSurveyScan } from "@/app/actions/survey-scans";
+import { deleteSurveyScan } from "@/app/actions/survey-scans";
+import { SurveyScanUploadForm } from "@/components/survey-scan-upload-form";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/delete-button";
-import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { Download, FileText, ScanLine } from "lucide-react";
 
 export default async function DesignerBriefPage({
@@ -105,29 +103,7 @@ export default async function DesignerBriefPage({
           </div>
         </div>
 
-        <form action={uploadSurveyScan.bind(null, projectId)} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Tytuł (opcjonalnie)">
-            <Input name="title" placeholder="np. Ankieta remontowa" />
-          </Field>
-          <Field label="Pomieszczenie">
-            <Select name="room_id" defaultValue="">
-              <option value="">Wszystkie PDF-y briefu</option>
-              {roomList.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
-            </Select>
-          </Field>
-          <Field
-            label="Zdjęcia ankiety *"
-            hint="Wybierz do 5 zdjęć naraz, maks. 10 MB każde."
-            className="sm:col-span-2"
-          >
-            <Input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
-          </Field>
-          <div className="sm:col-span-2 lg:col-span-4">
-            <PendingSubmitButton type="submit" size="sm" pendingLabel="Dodawanie…">
-              <ScanLine className="h-4 w-4" /> Dodaj zdjęcia ankiety
-            </PendingSubmitButton>
-          </div>
-        </form>
+        <SurveyScanUploadForm projectId={projectId} rooms={roomList} />
 
         {scans.length > 0 && (
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
