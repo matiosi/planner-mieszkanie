@@ -115,9 +115,12 @@ export default async function DesignerBriefPage({
               {roomList.map((room) => <option key={room.id} value={room.id}>{room.name}</option>)}
             </Select>
           </Field>
-          <Field label="Zdjęcia ankiety *" className="sm:col-span-2">
+          <Field
+            label="Zdjęcia ankiety *"
+            hint="Wybierz do 5 zdjęć naraz, maks. 10 MB każde."
+            className="sm:col-span-2"
+          >
             <Input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
-            <p className="mt-1 text-xs text-muted-foreground">Wybierz do 5 zdjęć naraz, maks. 10 MB każde.</p>
           </Field>
           <div className="sm:col-span-2 lg:col-span-4">
             <PendingSubmitButton type="submit" size="sm" pendingLabel="Dodawanie…">
