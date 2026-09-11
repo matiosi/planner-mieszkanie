@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
 
-const MAX_SCANS_PER_UPLOAD = 5;
+const MAX_SCANS_PER_UPLOAD = 20;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -118,7 +118,7 @@ export function SurveyScanUploadForm({ projectId, rooms }: Props) {
       </Field>
       <Field
         label="Zdjęcia ankiety *"
-        hint="Wybierz do 5 zdjęć naraz, maks. 10 MB każde."
+        hint="Wybierz do 20 zdjęć naraz, maks. 10 MB każde."
         className="sm:col-span-2"
       >
         <Input name="files" type="file" accept="image/jpeg,image/png,image/webp" multiple required />
