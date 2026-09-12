@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/data";
-import { storageImageDataUrl } from "@/lib/pdf-image";
+import { storagePdfImage, type EmbeddedPdfImage } from "@/lib/pdf-image";
 import {
   renderToBuffer,
   Document,
@@ -203,13 +203,13 @@ interface BriefPDFProps {
     description: string | null;
     designer_note: string | null;
     external_url: string | null;
-    imageUrl: string | null;
+    imageUrl: string | EmbeddedPdfImage | null;
   }[];
   surveyScans: {
     id: string;
     title: string;
     roomName: string | null;
-    imageUrl: string | null;
+    imageUrl: EmbeddedPdfImage | null;
   }[];
   generatedAt: string;
 }
@@ -409,13 +409,13 @@ export async function GET(
     // Pobierz URL-e zdjęć dla inspiracji
     const inspirationsWithImages = await Promise.all(
       (inspirations ?? []).map(async (insp) => {
-        let imageUrl: string | null = null;
+        let imageUrl: string | EmbeddedPdfImage | null = null;
         if (
           insp.source === "UPLOAD" &&
           insp.storage_bucket &&
           insp.storage_path
         ) {
-          imageUrl = await storageImageDataUrl(supabase, insp.storage_bucket, insp.storage_path);
+          imageUrl = await storagePdfImage(supabase, insp.storage_bucket, insp.storage_path);
         } else if (insp.external_url) {
           imageUrl = insp.external_url;
         }
@@ -436,7 +436,7 @@ export async function GET(
         id: scan.id,
         title: scan.title,
         roomName: scan.room_id ? room.name : null,
-        imageUrl: await storageImageDataUrl(supabase, scan.storage_bucket, scan.storage_path),
+        imageUrl: await storagePdfImage(supabase, scan.storage_bucket, scan.storage_path),
       }))
     );
 

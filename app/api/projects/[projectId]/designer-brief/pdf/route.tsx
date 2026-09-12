@@ -3,7 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/data";
 import { ProjectDesignerBriefPDF, type ProjectBriefSection } from "@/components/project-designer-brief-pdf";
-import { storageImageDataUrl } from "@/lib/pdf-image";
+import { storagePdfImage } from "@/lib/pdf-image";
 import React from "react";
 
 export const runtime = "nodejs";
@@ -56,7 +56,7 @@ export async function GET(
       (inspirations ?? []).map(async (inspiration) => ({
         ...inspiration,
         imageUrl: inspiration.source === "UPLOAD" && inspiration.storage_bucket && inspiration.storage_path
-          ? await storageImageDataUrl(supabase, inspiration.storage_bucket, inspiration.storage_path)
+          ? await storagePdfImage(supabase, inspiration.storage_bucket, inspiration.storage_path)
           : inspiration.external_url,
       }))
     );
@@ -110,7 +110,7 @@ export async function GET(
         id: scan.id,
         title: scan.title,
         roomName: scan.room_id ? roomNames.get(scan.room_id) ?? null : null,
-        imageUrl: await storageImageDataUrl(supabase, scan.storage_bucket, scan.storage_path),
+        imageUrl: await storagePdfImage(supabase, scan.storage_bucket, scan.storage_path),
       }))
     );
     const generatedAt = new Date().toLocaleDateString("pl-PL", {

@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
+import type { EmbeddedPdfImage } from "@/lib/pdf-image";
 
 const styles = StyleSheet.create({
   page: {
@@ -182,7 +183,7 @@ export interface ProjectBriefInspiration {
   category: string | null;
   description: string | null;
   designerNote: string | null;
-  imageUrl: string | null;
+  imageUrl: string | EmbeddedPdfImage | null;
 }
 
 export interface ProjectBriefSection {
@@ -202,7 +203,7 @@ interface Props {
     area: number | null;
     description: string | null;
   };
-  surveyScans: { id: string; title: string; roomName: string | null; imageUrl: string | null }[];
+  surveyScans: { id: string; title: string; roomName: string | null; imageUrl: EmbeddedPdfImage | null }[];
   sections: ProjectBriefSection[];
   generatedAt: string;
 }
