@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser, signedUrl } from "@/lib/data";
+import { requireUser } from "@/lib/data";
+import { storageImageDataUrl } from "@/lib/pdf-image";
 import {
   renderToBuffer,
   Document,
@@ -12,6 +13,8 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import React from "react";
+
+export const runtime = "nodejs";
 
 Font.registerHyphenationCallback((word) => [word]);
 
@@ -412,7 +415,7 @@ export async function GET(
           insp.storage_bucket &&
           insp.storage_path
         ) {
-          imageUrl = await signedUrl(insp.storage_bucket, insp.storage_path);
+          imageUrl = await storageImageDataUrl(supabase, insp.storage_bucket, insp.storage_path);
         } else if (insp.external_url) {
           imageUrl = insp.external_url;
         }
@@ -433,7 +436,7 @@ export async function GET(
         id: scan.id,
         title: scan.title,
         roomName: scan.room_id ? room.name : null,
-        imageUrl: await signedUrl(scan.storage_bucket, scan.storage_path),
+        imageUrl: await storageImageDataUrl(supabase, scan.storage_bucket, scan.storage_path),
       }))
     );
 
