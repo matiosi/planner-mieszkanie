@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/data";
-import { storagePdfImage, type EmbeddedPdfImage } from "@/lib/pdf-image";
+import { mapPdfImages, storagePdfImage, type EmbeddedPdfImage } from "@/lib/pdf-image";
 import {
   renderToBuffer,
   Document,
@@ -407,8 +407,9 @@ export async function GET(
     }
 
     // Pobierz URL-e zdjęć dla inspiracji
-    const inspirationsWithImages = await Promise.all(
-      (inspirations ?? []).map(async (insp) => {
+    const inspirationsWithImages = await mapPdfImages(
+      inspirations ?? [],
+      async (insp) => {
         let imageUrl: string | EmbeddedPdfImage | null = null;
         if (
           insp.source === "UPLOAD" &&
@@ -428,16 +429,17 @@ export async function GET(
           external_url: insp.external_url,
           imageUrl,
         };
-      })
+      }
     );
 
-    const surveyScansWithImages = await Promise.all(
-      (surveyScans ?? []).map(async (scan) => ({
+    const surveyScansWithImages = await mapPdfImages(
+      surveyScans ?? [],
+      async (scan) => ({
         id: scan.id,
         title: scan.title,
         roomName: scan.room_id ? room.name : null,
         imageUrl: await storagePdfImage(supabase, scan.storage_bucket, scan.storage_path),
-      }))
+      })
     );
 
     const projectData = project ?? {
@@ -476,6 +478,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="brief-${safeName || "pokoj"}.pdf"`,
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (err) {

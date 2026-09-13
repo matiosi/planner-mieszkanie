@@ -37,6 +37,7 @@ export default async function DesignerBriefPage({
   const roomList = rooms ?? [];
   const insList = inspirations ?? [];
   const scans = surveyScans ?? [];
+  const pdfVersion = Date.now();
 
   // Mapa notatek per pokój
   const noteMap = Object.fromEntries((briefNotes ?? []).map((n) => [n.room_id, n.note ?? ""]));
@@ -66,7 +67,7 @@ export default async function DesignerBriefPage({
         description="Inspiracje wybrane dla projektanta pogrupowane po pomieszczeniach."
         actions={
           <div className="flex items-center gap-2">
-            <a href={`/api/projects/${projectId}/designer-brief/pdf`} download>
+            <a href={`/api/projects/${projectId}/designer-brief/pdf?v=${pdfVersion}`} download>
               <Button size="sm">
                 <FileText className="h-4 w-4" />
                 Pobierz PDF
@@ -159,7 +160,7 @@ export default async function DesignerBriefPage({
                     <p className="text-sm text-muted-foreground mt-1">{room.concept_description}</p>
                   )}
                 </div>
-                <a href={`/api/projects/${projectId}/designer-brief/${room.id}`} download>
+                <a href={`/api/projects/${projectId}/designer-brief/${room.id}?v=${pdfVersion}`} download>
                   <Button variant="secondary" size="sm">
                     <FileText className="h-4 w-4" />
                     PDF pokoju

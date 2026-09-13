@@ -11,12 +11,13 @@ export default async function ExportPage({
 }) {
   const { projectId } = await params;
   await requireProject(projectId);
+  const pdfVersion = Date.now();
 
   const exports = [
     {
       title: "Brief dla projektanta (PDF)",
       description: "Odpowiedzi na ankietę, inspiracje z opisami i notatkami, pogrupowane po pomieszczeniach",
-      href: `/api/projects/${projectId}/designer-brief/pdf`,
+      href: `/api/projects/${projectId}/designer-brief/pdf?v=${pdfVersion}`,
       icon: FileDown,
       format: "PDF",
     },

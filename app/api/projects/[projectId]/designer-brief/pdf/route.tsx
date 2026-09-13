@@ -3,7 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/data";
 import { ProjectDesignerBriefPDF, type ProjectBriefSection } from "@/components/project-designer-brief-pdf";
-import { storagePdfImage } from "@/lib/pdf-image";
+import { mapPdfImages, storagePdfImage } from "@/lib/pdf-image";
 import React from "react";
 
 export const runtime = "nodejs";
@@ -52,13 +52,14 @@ export async function GET(
       constraintsByRoom.set(key, [...(constraintsByRoom.get(key) ?? []), constraint.description]);
     }
 
-    const inspirationWithImages = await Promise.all(
-      (inspirations ?? []).map(async (inspiration) => ({
+    const inspirationWithImages = await mapPdfImages(
+      inspirations ?? [],
+      async (inspiration) => ({
         ...inspiration,
         imageUrl: inspiration.source === "UPLOAD" && inspiration.storage_bucket && inspiration.storage_path
           ? await storagePdfImage(supabase, inspiration.storage_bucket, inspiration.storage_path)
           : inspiration.external_url,
-      }))
+      })
     );
 
     const sections: ProjectBriefSection[] = roomList.map((room) => ({
@@ -105,13 +106,14 @@ export async function GET(
       });
     }
 
-    const scansWithImages = await Promise.all(
-      (surveyScans ?? []).map(async (scan) => ({
+    const scansWithImages = await mapPdfImages(
+      surveyScans ?? [],
+      async (scan) => ({
         id: scan.id,
         title: scan.title,
         roomName: scan.room_id ? roomNames.get(scan.room_id) ?? null : null,
         imageUrl: await storagePdfImage(supabase, scan.storage_bucket, scan.storage_path),
-      }))
+      })
     );
     const generatedAt = new Date().toLocaleDateString("pl-PL", {
       year: "numeric",
@@ -132,6 +134,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="brief-projektanta-${safeName || "projekt"}.pdf"`,
+        "Cache-Control": "no-store, max-age=0",
       },
     });
   } catch (error) {
