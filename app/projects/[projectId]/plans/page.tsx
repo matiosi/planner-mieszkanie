@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { DeleteButton } from "@/components/delete-button";
 import { formatDate } from "@/lib/formatters";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { uploadPlan, deletePlan } from "@/app/actions/plans";
 import { Plus, GitCompare } from "lucide-react";
 
@@ -29,13 +29,11 @@ export default async function PlansPage({
 
   const list = plans ?? [];
 
-  // Generuj signed URLs
-  const withUrls = await Promise.all(
-    list.map(async (p) => ({
-      ...p,
-      url: await signedUrl(p.storage_bucket, p.storage_path),
-    }))
+  const urls = await signedUrls(
+    supabase,
+    list.map((plan) => ({ key: plan.id, bucket: plan.storage_bucket, path: plan.storage_path }))
   );
+  const withUrls = list.map((plan) => ({ ...plan, url: urls[plan.id] }));
 
   const originalPlans = withUrls.filter((p) => p.plan_type === "ORIGINAL");
   const designerPlans = withUrls.filter((p) => p.plan_type === "DESIGNER");

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { updateDesignerNote } from "@/app/actions/inspirations";
 import { deleteSurveyScan } from "@/app/actions/survey-scans";
 import { SurveyScanUploadForm } from "@/components/survey-scan-upload-form";
@@ -42,20 +42,21 @@ export default async function DesignerBriefPage({
   // Mapa notatek per pokój
   const noteMap = Object.fromEntries((briefNotes ?? []).map((n) => [n.room_id, n.note ?? ""]));
 
-  // Generuj signed URLs
-  const urlMap: Record<string, string | null> = {};
-  for (const insp of insList) {
-    if (insp.source === "UPLOAD" && insp.storage_bucket && insp.storage_path) {
-      urlMap[insp.id] = await signedUrl(insp.storage_bucket, insp.storage_path);
-    } else {
-      urlMap[insp.id] = insp.external_url;
-    }
-  }
-
-  const scanUrlMap: Record<string, string | null> = {};
-  for (const scan of scans) {
-    scanUrlMap[scan.id] = await signedUrl(scan.storage_bucket, scan.storage_path);
-  }
+  const storageUrls = await signedUrls(supabase, [
+    ...insList
+      .filter((insp) => insp.source === "UPLOAD")
+      .map((insp) => ({ key: `inspiration:${insp.id}`, bucket: insp.storage_bucket, path: insp.storage_path })),
+    ...scans.map((scan) => ({ key: `scan:${scan.id}`, bucket: scan.storage_bucket, path: scan.storage_path })),
+  ]);
+  const urlMap = Object.fromEntries(
+    insList.map((insp) => [
+      insp.id,
+      insp.source === "UPLOAD" ? storageUrls[`inspiration:${insp.id}`] : insp.external_url,
+    ])
+  );
+  const scanUrlMap = Object.fromEntries(
+    scans.map((scan) => [scan.id, storageUrls[`scan:${scan.id}`] ?? null])
+  );
 
   const insForRoom = (roomId: string) => insList.filter((i) => i.room_id === roomId);
   const noRoomIns = insList.filter((i) => !i.room_id);

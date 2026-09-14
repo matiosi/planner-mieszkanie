@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/formatters";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { Download, Shield } from "lucide-react";
 import Link from "next/link";
 
@@ -34,12 +34,11 @@ export default async function WarrantiesPage({
   const today = new Date();
   const in30days = new Date(Date.now() + 30 * 86400000);
 
-  const withUrls = await Promise.all(
-    list.map(async (doc) => ({
-      ...doc,
-      url: await signedUrl(doc.storage_bucket, doc.storage_path),
-    }))
+  const urls = await signedUrls(
+    supabase,
+    list.map((doc) => ({ key: doc.id, bucket: doc.storage_bucket, path: doc.storage_path }))
   );
+  const withUrls = list.map((doc) => ({ ...doc, url: urls[doc.id] }));
 
   const active = withUrls.filter(
     (d) => d.warranty_until && new Date(d.warranty_until) >= today

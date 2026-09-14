@@ -6,7 +6,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // Only protected application pages need a session refresh. The previous
+  // broad matcher performed an Auth request for public pages, API downloads
+  // and every non-static request.
+  matcher: ["/projects/:path*"],
 };

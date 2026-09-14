@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
 import { labelFor, labels, statusVariant } from "@/lib/labels";
 import { formatDate, formatCurrency } from "@/lib/formatters";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { uploadDocument, deleteDocument } from "@/app/actions/documents";
 import { Plus, FileText, Download } from "lucide-react";
 
@@ -35,13 +35,11 @@ export default async function DocumentsPage({
   const roomList = rooms ?? [];
   const vendorList = vendors ?? [];
 
-  // Generate signed URLs
-  const withUrls = await Promise.all(
-    list.map(async (doc) => ({
-      ...doc,
-      url: await signedUrl(doc.storage_bucket, doc.storage_path),
-    }))
+  const urls = await signedUrls(
+    supabase,
+    list.map((doc) => ({ key: doc.id, bucket: doc.storage_bucket, path: doc.storage_path }))
   );
+  const withUrls = list.map((doc) => ({ ...doc, url: urls[doc.id] }));
 
   async function addDocument(formData: FormData) {
     "use server";

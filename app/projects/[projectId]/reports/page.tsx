@@ -134,7 +134,7 @@ export default async function ReportsPage({
                 const Icon = a.urgency === "critical" ? AlertCircle : AlertTriangle;
                 const color = a.urgency === "critical" ? "text-red-500" : "text-amber-500";
                 return (
-                  <Link key={i} href={a.href} className="flex items-start gap-2 rounded-md p-2 hover:bg-muted transition-colors">
+                  <Link key={i} href={a.href} prefetch={false} className="flex items-start gap-2 rounded-md p-2 hover:bg-muted transition-colors">
                     <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${color}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{a.title}</p>

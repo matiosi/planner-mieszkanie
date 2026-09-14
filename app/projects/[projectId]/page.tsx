@@ -120,6 +120,7 @@ export default async function ProjectDashboardPage({
               <Link
                 key={room.id}
                 href={`/projects/${projectId}/rooms/${room.id}`}
+                prefetch={false}
                 className="flex items-center justify-between rounded-md border border-border px-3 py-2.5 hover:bg-muted transition-colors"
               >
                 <span className="text-sm font-medium">{room.name}</span>

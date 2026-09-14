@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 export const PROJECT_ROLES = ["OWNER", "EDITOR", "VIEWER", "DESIGNER", "CONTRACTOR"] as const;
@@ -79,13 +80,11 @@ export async function getRooms(projectId: string) {
 
 export async function getDashboard(projectId: string) {
   const { supabase, project } = await requireProjectAccess(projectId);
-  const [rooms, budget, tasks, decisions, products, vendors, inspirations, differences] = await Promise.all([
+  const [rooms, budget, tasks, decisions, inspirations, differences] = await Promise.all([
     supabase.from("rooms").select("id,name,status").eq("project_id", projectId).order("sort_order"),
     supabase.from("budget_items").select("planned_cost,actual_cost,unexpected_cost").eq("project_id", projectId),
     supabase.from("tasks").select("id,title,status,priority,due_date").eq("project_id", projectId),
     supabase.from("decisions").select("id,status").eq("project_id", projectId),
-    supabase.from("products").select("id").eq("project_id", projectId),
-    supabase.from("vendors").select("id").eq("project_id", projectId),
     supabase.from("inspirations").select("id").eq("project_id", projectId),
     supabase.from("plan_differences").select("id,status,priority").eq("project_id", projectId),
   ]);
@@ -95,8 +94,6 @@ export async function getDashboard(projectId: string) {
     budget: budget.data ?? [],
     tasks: tasks.data ?? [],
     decisions: decisions.data ?? [],
-    products: products.data ?? [],
-    vendors: vendors.data ?? [],
     inspirations: inspirations.data ?? [],
     differences: differences.data ?? [],
   };
@@ -128,6 +125,68 @@ export async function signedUrl(bucket?: string | null, path?: string | null): P
     });
     return null;
   }
+}
+
+type StorageFileReference = {
+  key: string;
+  bucket?: string | null;
+  path?: string | null;
+};
+
+/**
+ * Signs files in one Storage request per bucket. Pages with galleries used to
+ * create a new server client and make one request for every displayed file.
+ */
+export async function signedUrls(
+  supabase: SupabaseClient,
+  files: readonly StorageFileReference[],
+  expiresIn = 3600
+): Promise<Record<string, string | null>> {
+  const urls: Record<string, string | null> = Object.fromEntries(
+    files.map((file) => [file.key, null])
+  );
+  const filesByBucket = new Map<string, StorageFileReference[]>();
+
+  for (const file of files) {
+    if (!file.bucket || !file.path) continue;
+    const bucketFiles = filesByBucket.get(file.bucket);
+    if (bucketFiles) {
+      bucketFiles.push(file);
+    } else {
+      filesByBucket.set(file.bucket, [file]);
+    }
+  }
+
+  await Promise.all(
+    [...filesByBucket.entries()].map(async ([bucket, entries]) => {
+      try {
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .createSignedUrls(entries.map((entry) => entry.path!), expiresIn);
+
+        if (error) {
+          console.error("Nie udało się wygenerować podpisanych URL-i plików.", {
+            bucket,
+            paths: entries.length,
+            message: error.message,
+          });
+          return;
+        }
+
+        entries.forEach((entry, index) => {
+          urls[entry.key] = data?.[index]?.signedUrl ?? null;
+        });
+      } catch (error) {
+        console.error("Nie udało się wygenerować podpisanych URL-i plików.", {
+          bucket,
+          paths: entries.length,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    })
+  );
+
+  return urls;
 }
 
 // Helpery do parsowania FormData

@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DeleteButton } from "@/components/delete-button";
 import { BeforeAfterSlider } from "@/components/before-after-slider";
 import { formatDate } from "@/lib/formatters";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { uploadProgressPhoto, deleteProgressPhoto } from "@/app/actions/progress";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -63,11 +63,17 @@ export default async function ProgressPage({
     return acc;
   }, {});
 
-  // Signed URLs dla wszystkich zdjęć
-  const urlMap: Record<string, string | null> = {};
-  for (const photo of allPhotos) {
-    urlMap[photo.id] = await signedUrl(photo.storage_bucket, photo.storage_path);
-  }
+  // Gallery needs only visible images; comparison intentionally signs all of
+  // them because it pairs photos across phases.
+  const photosToSign = view === "compare" ? allPhotos : filtered;
+  const urlMap = await signedUrls(
+    supabase,
+    photosToSign.map((photo) => ({
+      key: photo.id,
+      bucket: photo.storage_bucket,
+      path: photo.storage_path,
+    }))
+  );
 
   // Zdjęcia do porównania (z URL-ami)
   const photosWithUrls = allPhotos
@@ -137,7 +143,11 @@ export default async function ProgressPage({
       {/* Zakładki — filtrowanie + widok porównania */}
       <div className="mt-6 flex items-center gap-1 flex-wrap">
         {PHASES.map((ph) => (
-          <Link key={ph.value} href={ph.value ? `${basePath}?phase=${ph.value}` : basePath}>
+          <Link
+            key={ph.value}
+            href={ph.value ? `${basePath}?phase=${ph.value}` : basePath}
+            prefetch={false}
+          >
             <Button
               variant={phaseFilter === ph.value ? "primary" : "secondary"}
               size="sm"
@@ -152,7 +162,7 @@ export default async function ProgressPage({
           </Link>
         ))}
         <div className="ml-auto">
-          <Link href={`${basePath}?view=compare`}>
+          <Link href={`${basePath}?view=compare`} prefetch={false}>
             <Button
               variant={view === "compare" ? "primary" : "secondary"}
               size="sm"
@@ -194,6 +204,8 @@ export default async function ProgressPage({
                               <img
                                 src={url}
                                 alt={photo.title ?? "Zdjęcie postępu"}
+                                loading="lazy"
+                                decoding="async"
                                 className="h-40 w-full object-cover"
                               />
                             </a>

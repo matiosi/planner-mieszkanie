@@ -95,6 +95,7 @@ export default async function NextActionsPage({
                   <Link
                     key={i}
                     href={action.href}
+                    prefetch={false}
                     className={`flex items-start gap-3 rounded-lg border p-3 transition-opacity hover:opacity-80 ${config.bg}`}
                   >
                     <Icon className="h-5 w-5 mt-0.5 shrink-0" />

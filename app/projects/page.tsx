@@ -64,7 +64,7 @@ export default async function ProjectsPage() {
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {projects.map((p) => (
-            <Link key={p.id} href={`/projects/${p.id}`} className="group block">
+            <Link key={p.id} href={`/projects/${p.id}`} prefetch={false} className="group block">
               <div className="rounded-lg border border-border bg-card p-5 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3 mb-3">

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { InspirationGallery } from "@/components/inspiration-gallery";
 import { ImportUrlForm } from "@/components/import-url-form";
-import { requireProject, signedUrl } from "@/lib/data";
+import { requireProject, signedUrls } from "@/lib/data";
 import { upsertInspiration } from "@/app/actions/inspirations";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -33,14 +33,16 @@ export default async function InspirationsPage({
   const list = inspirations ?? [];
   const roomList = rooms ?? [];
 
-  const withUrls = await Promise.all(
-    list.map(async (insp) => ({
-      ...insp,
-      displayUrl: insp.source === "UPLOAD"
-        ? await signedUrl(insp.storage_bucket, insp.storage_path)
-        : insp.external_url,
-    }))
+  const uploadUrls = await signedUrls(
+    supabase,
+    list
+      .filter((insp) => insp.source === "UPLOAD")
+      .map((insp) => ({ key: insp.id, bucket: insp.storage_bucket, path: insp.storage_path }))
   );
+  const withUrls = list.map((insp) => ({
+    ...insp,
+    displayUrl: insp.source === "UPLOAD" ? uploadUrls[insp.id] : insp.external_url,
+  }));
 
   return (
     <>

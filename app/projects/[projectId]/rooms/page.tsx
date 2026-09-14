@@ -83,6 +83,7 @@ export default async function RoomsPage({
               <div className="flex items-start justify-between gap-2">
                 <Link
                   href={`/projects/${projectId}/rooms/${room.id}`}
+                  prefetch={false}
                   className="font-medium hover:underline"
                 >
                   {room.name}
@@ -110,7 +111,7 @@ export default async function RoomsPage({
               </form>
               <div className="flex items-center gap-2 pt-2 border-t border-border">
                 <Button asChild variant="secondary" size="sm" className="flex-1">
-                  <Link href={`/projects/${projectId}/rooms/${room.id}`}>
+                  <Link href={`/projects/${projectId}/rooms/${room.id}`} prefetch={false}>
                     Szczegóły <ChevronRight className="h-3 w-3" />
                   </Link>
                 </Button>
